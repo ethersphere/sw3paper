@@ -1,63 +1,56 @@
 \subsection{Waivers}
 
-If the imbalance in the swap channel is the result of high variance as opposeed to unequal consumption, it will happen that, after a period of accumulating cheques the channel balance starts tilting the other way. Nominally it is now up to the other party to issue cheques to its peer resulting in uncashed cheques accumulating on both sides.
+If the imbalance in the swap channel is the result of high variance as opposed to unequal consumption, after a period of accumulating cheques the channel balance starts tilting the other way. Normally it is now up to the other party to issue cheques to its peer resulting in uncashed cheques accumulating on both sides.
 To allow for further savings in transaction costs, it would be desirable to be able to `play the cheques off against each other'.
 
 Such a process is possible, but it requires certain deep changes within the chequebook contract. In particular, cashing cheques can no longer be immediate and must incur a security delay, familiar to anyone who has studied other implementations of state channels.
 
-Let us imagine a system analgous to cheques being returned to the issuer.
-
+Let us imagine a system analogous to cheques being returned to the issuer.  
 Assume peer A issued cheques to B and the balance was brought back to zero. Now the balance tilts in A's favour but the cheques from A to B have not been cashed. In this scenario, instead of sending a cheque to A, B can waive part of their entitlement. This justifies swap as \emph{send waiver as payment} (see figure \ref{fig:waiverswap}).
 A waiver essentially implements a proof that a cheque is destroyed and cannot be cashed, i.e., a promise that (part of) an uncashed cheque will not be redeemed.
 
 A \gloss{waiver} is implemented as a note signed by the peer holding uncashed cheques%. The note specifies the current \gloss{swap index} (sequential number) 
 and indicates the amount of debt they agree to waive from their entitlement.
 
-\subsubsection*{Cashing cheques in the context of waivers}
+% \subsubsection*{Cashing cheques in the context of waivers}
 If a channel is set to issue waived cheques then cashing must be a two step process.
 Upon receiving a cheque, the contract verifies the data, and %signature and checks if the swap index matches the one on the cheque.
-if the cheque is valid, the claimed amount is stored in a variable along with a timestamp. At this point a grace period starts: the original issuer gets notified of the cashing request and is invited to send in their last (highest) waiver signed by their peer.
+if the cheque is valid, the claimed amount is stored in a variable along with a timestamp. At this point a grace period starts: the original issuer gets notified of the cashing request and is invited to send in their last (highest) waiver signed by their peer. In case waivers are allowed cheques specify a \gloss{swap cycle index} and the contract keeps track of this.
 
-\subsubsection*{Cashing waivers}
+% \subsubsection*{Cashing waivers}
 Analogously to cheques, waivers are accepted by the contract. %if sent in as data in a transaction together with the issuer's address.
-Upon receiving a waiver the contract verifies the data, and %signature and checks if the swap index matches the one in the waiver.
-if the waiver is valid, the peer's cumulative cashed balance is increased by the waived amount pretending the waived amount was paid out. Then the new cumulative cashed balance is compared to the one recorded when the cheque was received. Any remaining positive balance is transfered to the beneficiary, the cumulative sum is cleared from storage and the swap index is incremented.
+Upon receiving a waiver the contract verifies the data, and checks if the swap cycle index matches the one in the waiver.
+If the waiver is valid, the peer's cumulative cashed balance is increased by the waived amount pretending the waived amount was paid out. Then the new cumulative cashed balance is compared to the one recorded when the cheque was received. Any remaining positive balance is transferred to the beneficiary, the cumulative sum is cleared from storage and the swap cycle index is incremented.
 
 %%I stop here for now because the use of 'the swap index'  is confusing and I will rewrite it later ot be more clear.... a sequential index of waivers, stored by the checkbook separately from the serial number of the cheques but functioning like... how should this work? unclearly written
 
 During the grace period the amount is not checked against the book's global balance.
 After the grace period expires and no waiver was received, a second transaction
-increments the swap index and simply releases the funds or default on its debt.
-During the grace period, further cheques can be sent to the contract: if they are valid
-and have the same swap index as the one currently recorded, they simply replace
-the earlier one and the grace period is renewed.
-Since waivers need to match the swap index set by the cheques they destroy, they cannot
-be sent to the contract before the cheque(s) they waive or after a new swap cycle starts.
+increments the swap cycle index and simply releases the funds or defaults on its debt.
+During the grace period, further cheques can be sent to the contract: if they are valid and have the same swap cycle index as the one currently recorded, they simply replace the earlier one and the grace period is renewed.
+Since waivers need to match the swap cycle index set by the cheques they destroy, they cannot be sent to the contract before the chequeds they waive or after a new swap cycle starts.
 
 In normal operation, however, peers are not incentivised to send in cheques as
 long as they can issue waivers. Once the waiver goes over
-the total amount of uncashed liabilities, the peer needs to send a cheque.
-The swap index is incremented in this cheque and the basis for issuing is the channel
-balance stored on the chain. This makes sure that cheques and
-waivers cannot be reused.%
+the total amount of uncashed cheques, the peer needs to send a cheque.
+The swap cycle index is incremented in this cheque and the basis for issuing is the channel balance stored on the chain. This makes sure that cheques and waivers cannot be reused.%
 %
-\footnote{The volume of cheques waived will not increase the cumulative balance and therefore
-do not count toward total business volume for the purposes of credit history.
+\footnote{The volume of cheques waived will not increase the cumulative balance and therefore do not count toward total business volume for the purposes of credit history.
 This can be amended if cheques are sent together with the latest waivers
 and after validation the contract would adjust the cumulative balance to reflect the total volume.}
 
 Using waivers can substantially increase the tolerated variance in the channel balance
 without requiring actual transfer or impacting liquidity of the chequebook.
 Without it, both peers would need to issue cheques and settlement would involve
-transfering back and forth between the two peers, which means the first amount cashed
+transferring back and forth between the two peers, which means the first amount cashed
 would not be available for a party for a period.
 
 Waived cheques represent stronger guarantees since the cheque can effectively serve
 as backing for incurring costs dedicated to the original issuer.
 
-To summarise, Swap is ideally suited for immediately verifyiable, recurring micropayments for bidirectional
-services. The primary usecase is bandwidth compensation and accounting to incentivise
-relaying in a peer to peer system. As two peers are doing continuous business
+To summarise, Swap is ideally suited for immediately verifiable, recurring micropayments for bidirectional
+services. The primary use case is bandwidth compensation and accounting to incentivise
+relaying in a peer-to-peer system. As two peers are doing continuous business
 they swap services, cheques and waivers and keep accounting and compensation offchain.
 
 
