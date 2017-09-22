@@ -12,7 +12,7 @@ A very simple smart contract that allows the beneficiary to choose when payments
 This \gloss{chequebook} contract is a wallet that can process cheques issued by its owner. The cheques are
 analgous to those in the real-world: the issuer signs a cheque specifying a beneficiary, a date and an amount,
 gives it to the recipient as a token of promise to pay at a later date. The smart contract plays the
-role of the bank. When the recipient wishes to get paid, they ``cash the cheque'' by submitting it to the smart contract. The contract, after validating the signature, date and the amount specified on the cheque, transfers the amount to the beneficiary's account.
+role of the bank. When the recipient wishes to get paid, they ``cash the cheque'' by submitting it to the smart contract. The contract, after validating the signature, date and the amount specified on the cheque, transfers the amount to the beneficiary's account (see figure \ref{fig:swap-chequebook}).
 %Analogously to the person taking the cheque to the bank to cash it, anyone can send the digital cheque as part of the data in a transaction to the owner's chequebook account and thus trigger the transfer.
 
 \input{swap-diagram.tex}
