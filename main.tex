@@ -101,7 +101,7 @@ the escrow acknowledges the delivery before releasing the funds.
 This is implemented by the chequebook calling the escrow witness contract
 to give a testimony. In case the condition is fully verifiable algorithmically in the VM,
 the entire transaction remains within the closed system, there is no real-world liability and the transfer
-is enforcable.
+is enforceable.
 
 If no beneficiary is specified, a conditional note is essentially a \gloss{bounty}.
 A bounty is meant to be published or broadcast to a set of known service providers.
@@ -169,11 +169,11 @@ positive, the amount goes to escrow and a grace period starts.
 During the grace period, A can settle the claim by sending in the appropriate cheque.
 
 If the note condition does not check out, B's challenge will cost them the transaction.
-Even if it does, they won't gain anything by the challange if they did receive the
+Even if it does, they won't gain anything by the challenge if they did receive the
 cheque from A since they still needed to send the proof in a transaction.
 Therefore B is disincentived to initiate frivolous challenges.
 Conversely, A is incentivised to send the cheque to B after it receives the invoice,
-otherwise it is A that needs to pay transaction cost of sending in the cheque upon B's correct challenge.
+otherwise it is A that needs to pay the transaction cost of sending in the cheque upon B's correct challenge.
 We therefore conclude that the optimal behaviour for A and B is offchain exchange of invoice and cheque.
 
 \subsection{Soft channel deposits}
@@ -188,7 +188,7 @@ on outstanding conditional bonds without explicitly assigning deposits to channe
 
 Let us assume A and B both maintain an ordered list of active conditional notes issued by A.
 Each time A issues a conditional note or pays for a fulfilled one or one expires, the list is updated.
-The hashes of active notes in order of issueance is organised in a swarm tree, the
+The hashes of active notes in order of issuance is organised in a swarm tree, the
 root hash of which is signed by B and passed to A together with a so called
 \gloss{soft channel deposit claim}. This claim constitutes an acknowledment of
 the outstanding liabilities of A towards B. Assume further that there exist a notion of \gloss{epoch},
@@ -236,7 +236,7 @@ Once the channel deposit (of A towards B) is secured on chain, all the outstandi
 issued to B are guaranteed to be redeemable in the standard ways.
 If a peer is found to issue contradictory channel claims for the same epoch, they relinquish
 their right to any claim. For any third party this entails that if a peer's claim is
-included in the allocation table, the maximum they are entitled to redeem is limited:
+included in the allocation table, the maximum they are entitled to redeem is limited to:
 (1) the sum in the claim if they signed a correct unique claim or
 (2) zero if they illegally signed multiple claims for the same epoch.
 Futhermore, since the allocation table is exhaustive, i.e., each
@@ -278,7 +278,7 @@ in case they suspect foul play. Such accountability is
 crucial for the design of scalable decentralised service economies.
 
 We will describe the trial process for dispute
-resolution that first evaluates the evidence agaist the accused provider.
+resolution that first evaluates the evidence against the accused provider.
 The verification is the same as the one used in the process of sanctioning outpayments,
 but once a provider is proven guilty by the court on the grounds of
 conditions specified in the service contract, various punitive measures will be
@@ -293,7 +293,7 @@ of reputation.}
 
 By registering on a service contract and putting up a deposit if required, providers
 swear to play by the rules.
-This deposit is locked up and used later as compensatory insurance transfered to the
+This deposit is locked up and used later as compensatory insurance transferred to the
 customer, redistributed or burnt.
 
 
@@ -302,7 +302,7 @@ customer, redistributed or burnt.
 If a service provider is suspected of non-compliance, they can be challenged
 by opening a case with the swear contract.
 An abstract trial is composed of stages of litigation, at each stage
-the court procedure calls witnesses and depending on their testimony
+the court procedure calls witnesses and, depending on their testimony,
 advance the trial into the next stage. Witnesses can refuse testimony
 if evidence is not (yet) available in which case the trial
 is paused until the grace period allowed to submit evidence is over.
@@ -319,7 +319,7 @@ thus be standardized
 even though they each may require different data to be submitted to them as evidence.
 
 To implement such an abstract dispute resolution system
-the trial is described by a finite state automaton the states of which correspond
+the trial is described by a finite state automaton, the states of which correspond
 to stages of litigation and
 the transitions are labeled by various outcomes of evaluating evidence submitted
 to the respective expert witness associated with the stage. A witness
@@ -488,11 +488,11 @@ towards the recipient.
 
 Take our earlier example of A sending a message to remote node D, and assume that
 B, C, and D are all registered relaying nodes that are online. If there is reason
-to believe that the message did not reach D, A can challange B by simply providing
+to believe that the message did not reach D, A can challenge B by simply providing
 the takeover proof for the message. B can defend itself by providing takeover proof from C,
 thereby shifting the blame to C for blocking the delivery. C in turn can show takeover proof
 from D to refute the challenge. It can also happen that C indeed did not forward the message
-because there was no nodes closer to D among its peers. But this means that
+because there was no node closer to D among its peers. But this means that
 D is a nearest neighbour of C, in which case D should have been connected to C.
 Therefore D can be challenged to prove that it was connected to C. D can respond to the challenge
 by showing handover state obtained from C dated after the message delivery deadline. This in turn is
@@ -542,18 +542,18 @@ tasks in hope of cashing the bounty themselves.
 To guarantee that downstream peers do get forwarded all the tasks and bounties,
 upstream peers can be challenged when they cash a bounty:
 if there is a valid handover proof of connection (synchronisation)
-for the relevant period after the bond was issued, upstream peer can be challanged
+for the relevant period after the bond was issued, upstream peer can be challenged
 for not relaying it (but withholding). Conversely, the bounty outpayment can be challenged
 if the candidate provider is not the closest node to the task, i.e., a downstream peer closer to
 the task address can show connectivity during the relevant period. Withholding if proven could
 result in the same punitive measure as failing to deliver.
 
 
-Service nodes that are capable staying online can choose to register
+Service nodes that are capable of staying online can choose to register
 and put up a deposit as collateral.
 One consequence of GRANT is that for each task, there is a node (or set of neighbouring nodes)
 that is responsible for delivering the task and can ultimately be held liable
-for non-delivery. Using the swindle scheme for litigation, if proven guilty node's
+for non-delivery. Using the swindle scheme for litigation, if proven guilty a node's
 collateral is forfeited.
 Since individual punitive measures are a very
 effective incentive, service guarantees can be given independent of the
