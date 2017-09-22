@@ -28,12 +28,9 @@ During the grace period the amount is not checked against the book's global bala
 After the grace period expires and no waiver was received, a second transaction
 increments the swap cycle index and simply releases the funds or defaults on its debt.
 During the grace period, further cheques can be sent to the contract: if they are valid and have the same swap cycle index as the one currently recorded, they simply replace the earlier one and the grace period is renewed.
-Since waivers need to match the swap cycle index set by the cheques they destroy, they cannot be sent to the contract before the chequeds they waive or after a new swap cycle starts.
+Since waivers need to match the swap cycle index set by the cheques they destroy, they cannot be sent to the contract before the cheques they waive or after a new swap cycle starts.
 
-In normal operation, however, peers are not incentivised to send in cheques as
-long as they can issue waivers. Once the waiver goes over
-the total amount of uncashed cheques, the peer needs to send a cheque.
-The swap cycle index is incremented in this cheque and the basis for issuing is the channel balance stored on the chain. This makes sure that cheques and waivers cannot be reused.%
+In normal operation, however, peers are not incentivised to send in cheques as long as they can issue waivers. Once the waiver goes over the total amount of uncashed cheques, the peer needs to send a cheque. The swap cycle index is incremented in this cheque and the basis for issuing is the channel balance stored on the chain. This makes sure that cheques and waivers cannot be reused.%
 %
 \footnote{The volume of cheques waived will not increase the cumulative balance and therefore do not count toward total business volume for the purposes of credit history.
 This can be amended if cheques are sent together with the latest waivers
