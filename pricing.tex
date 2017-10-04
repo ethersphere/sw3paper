@@ -1,0 +1,16 @@
+
+The problem of pricing appears already when we introduce indirect transactions in a service provision network. When an intermediate relaying node takes over a bounty note for a task, it is implicitly assumed that they can find a node they forward it to. This presupposes two things, first that there exists a node sworn on the same service provision game and second, that the node taking over the task is willing to do so for a price not higher than the upstream bounty promised to give for it. The first criterion is guaranteed by GRANT (in particular a healthy kademlia topology), but the second needs to be stipulated. The easiest way to achieve it is to have fixed maximum price for a task set centrally for the entire service network. 
+
+In order to allow the market to adjust the unit price, we will propose two distinct mechanisms that model a market-driven pricing scheme: one that decreases the price and the other that increases depending on demand and supply.
+
+
+
+
+
+Let us assume that there is a notion of epoch, a period where price changes are set. Issuers and their peers know the fix maximum price of current epoch and can enforce that valid bounties specify this amount. 
+Assume further that we modify the task allocation scheme so that for each task there is more than one node potential service providers that are granted the opportunity to service a task. Only one or a subset of them will actually get rewarded for doing so. 
+This means that some nodes at least some of the time will do spurious work. If the number of nodes granted the task is on-average constant, and opportunities to do service is uniform then uncompensated work is  predictable and can be factored in the price. 
+If the bounty specifies a preference which providers get rewarded, 
+the potential task providers can compete for the bounty.
+
+An obvious choice for the selection rule for such a competitive bounty is a preference for lower price. 

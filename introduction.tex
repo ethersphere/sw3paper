@@ -15,7 +15,7 @@ We introduce a framework to support generic incentive systems for decentralised 
 
 As with any state channel, the system relies on the three pillars of communication, registration and enforcement:
 \begin{enumerate}
- \item Peers engage in local exchange (p2p communication) of data, promises, payments, messages, requests, deliveries etc. We call this the \textbf{SWAP} network. Furthermore, peers will relay data between disjoint peers to extend the scope of the network.
+ \item Peers engage in local exchange (peer-to-peer communication) of data, promises, payments, messages, requests, deliveries etc. We call this the \textbf{SWAP} network. Furthermore, peers will relay data between disjoint peers to extend the scope of the network.
  \item All nodes in the network pay a security deposit to a smart contract. This is the \textbf{SWEAR} registration. This allows them to offer more complex services to their peers.
  \item The rules of service provision are enforced by a courtroom -- the \textbf{SWINDLE} contract -- making nodes accountable in case of non-compliance.
 \end{enumerate}
@@ -27,8 +27,8 @@ The tools presented here provide a platform for running digital services that ar
 The claim is that virtually any digital service can be reinterpreted as a swap, swear and swindle game.
 
 The solutions presented are built up in a step-by-step fashion from very simple and intuitive
-modules.% Various errors in smart contracts revealed that turing completeness while expressive, can be dangerous and prompted many to call for solutions with less expressive power.
-Most of the components having real-world analogues, our modular approach has the advantage that reasoning about complex systems becomes easier, enabling less error-prone implementations.
+modules, % Various errors in smart contracts revealed that turing completeness while expressive, can be dangerous and prompted many to call for solutions with less expressive power.
+and most of the components have clear real-world analogues. Our modular approach has the advantage that reasoning about the overall complex system becomes easier, enabling less error-prone implementations.
 
 In section 2 we introduce swap channels, an off-chain peer-to-peer accounting and
 payment solution for bidirectional services. We start from an off-chain protocol to
@@ -40,7 +40,7 @@ Conditional bonds pay out rewards upon successful delivery and
 implement positive incentivisation for decentralised services.
 
 In section 4, we present a way to implement service guarantees using an abstract
-challenge based system inspired by the blockchain as a judge paradigm. The threat
+challenge based system inspired by the blockchain-as-a-judge paradigm. The threat
 of enforceable punitive measures serves as incentive to play by the rules.
 
 In section 5, we show how swap-channels can form a service network and extend the
@@ -51,6 +51,4 @@ Section 6 discusses price signalling and shows a way to eliminate the opportunit
 inherent in advance payments for future services when using appreciating assets like cryptocurrency.
 We conclude by showing how real world digital services can serve to back stablecoins.
 
-In the appendix you find the implementation details of the smart contracts underpinning the
-system, as well as detailed examples of their application to data storage insurance and
-generic off-chain payments.
+In the appendix you find the implementation details of the smart contracts underpinning the system, as well as detailed examples of their application to data storage insurance and generic off-chain payments.

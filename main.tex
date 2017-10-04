@@ -1,5 +1,6 @@
 \documentclass[a4paper,10pt]{article}
 \usepackage[utf8]{inputenc}
+\usepackage{amssymb}
 \usepackage{fullpage}
 \usepackage{verbatim}
 \usepackage{multirow}
@@ -46,12 +47,13 @@ also be referred to as an \gloss{escrow condition}.
 A promissory note can contain the following optional fields:
 
   \begin{itemize}
+    \item swap cycle index
     \item amount
     \item beneficiary
     \item escrow address
     \item valid from
     \item valid until
-    \item swap index
+    \item remark
   \end{itemize}
 
 In the simplest case no escrow condition or maturation date is given: such a note
@@ -88,7 +90,7 @@ accepting the bond is equivalent to granting a loan on the grounds of the credit
 
 If an escrow address is specified in the note, the referenced contract can be used to verify the condition
 of redemption. When the escrow condition is verified, the owner, the beneficiary address, and
-the note id (the hash of the signed note) are passed as arguments to the {\gloss{testimonyFor?}} method
+the note id (the hash of the signed note) are passed as arguments to the {\gloss{testimonyFor}} method
 of the escrow contract. By implementing this method the contract conforms to the \gloss{witness} contract
  interface
 (section \ref{sec:courtroom}). Given the witness contract, the escrow condition is implicitly defined
@@ -105,45 +107,55 @@ is enforceable.
 
 If no beneficiary is specified, a conditional note is essentially a \gloss{bounty}.
 A bounty is meant to be published or broadcast to a set of known service providers.
+Bounties will play a crucial role in certain types of service networks, discussed in section \ref{sec:wasp}.
 Figure \ref{fig:taxonomy} summarises the various types of promissory notes.
 
 
-\newcommand{\tick}{$X$}
-\newcommand{\opt}{$(X)$}
+\newcommand{\tick}{\checkmark}
+\newcommand{\opt}{?}
 \begin{center}
 \begin{figure}
 \begin{center}
-\begin{tabular}{|l||c|c|c|c|c|c|}
+\begin{tabular}{|l|r||c|c|c|c|c|c|c|}
 \hline
-\multicolumn{1}{|c||}{type}
-& \multicolumn{6}{c|}{fields}
-\\
-\cline{2-7}
-& swap index
+note & fields
+& swap cycle index
 & amount
 & beneficiary
 & escrow
 & valid from
 & valid until
+& remark
+\\
+\cline{2-9}
+
+type & type 
+& int256
+& int256
+& address
+& address
+& int256
+& int256
+& byte32
 \\
 \hline
 \hline
-cheque & \tick & \tick & \tick & & & \opt
+\multicolumn{2}{|l||}{cheque}   & \tick & \tick & \tick & & & \opt& \opt
 \\
-authorisation &  & \tick & \tick & & & \opt
+\multicolumn{2}{|l||}{authorisation} &  & \tick & \tick & & & \opt& \opt
 \\
-bond & \tick & \tick & \tick & & \tick & \opt
+\multicolumn{2}{|l||}{bond} & \tick & \tick & \tick & & \tick & \opt& \opt
 \\
-conditional bond &  & \tick & \tick & \tick & \opt & \opt
+\multicolumn{2}{|l||}{conditional bond} &  & \tick & \tick & \tick & \tick & \opt& \opt
 \\
-bounty & \tick &  \tick & & \tick & \opt & \opt
+\multicolumn{2}{|l||}{bounty} & \tick &  \tick & & \tick & \tick & \opt& \opt
 \\
-soft channel deposit &  \tick & \tick & & & &
+\multicolumn{2}{|l||}{soft channel deposit} &  \tick & \tick & & & && \opt
 \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Taxonomy of promissory notes}
+\caption{Taxonomy of promissory notes: '\tick' indicates a mandatory field, types show the corresponding solidity type to encode in the ABI. '?' indicates optional field.}
 \label{fig:taxonomy}
 \end{figure}
 \end{center}
@@ -218,6 +230,22 @@ Upon receiving the soft channel deposit allocation table, B verifies that
 (2) the amount dedicated to B is no less than the sum of all outstanding active
 conditional notes issued by A to B.
 (3) each active peer in A's swap contract has a corresponding claim for the current epoch and the signature is valid.
+This process in illustrated in figure \ref{fig:softchanneldeposit}
+
+
+\begin{center}
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+\end{tikzpicture}
+\end{center}
+\caption{Soft channel deposit}
+\label{fig:softchanneldeposit}
+\end{figure}
+\end{center}
+
+
+
 
 At any point in time, soft channel deposit claims can be consolidated to actual
 channel deposits.
@@ -229,7 +257,7 @@ If each peer does this, the global deposit is reduced with the total of soft cha
 deposits.%
 %
 \footnote{To save all peers the trouble of sending inclusion proofs, when A initiates withdrawal from
-their global deposit, they need to submit the actual allocation table starting a grace period during which
+their global deposit, they need to submit current allocation table starting a grace period during which
 creditors are invited to challenge the allocation by presenting a contradicting claim.}
 
 Once the channel deposit (of A towards B) is secured on chain, all the outstanding conditional notes
@@ -239,24 +267,27 @@ their right to any claim. For any third party this entails that if a peer's clai
 included in the allocation table, the maximum they are entitled to redeem is limited to:
 (1) the sum in the claim if they signed a correct unique claim or
 (2) zero if they illegally signed multiple claims for the same epoch.
-Futhermore, since the allocation table is exhaustive, i.e., each
-peer signed their claim, third parties can also assume that the sum of all claims in the
-allocation table is the maximum total deposit that can be consolidated.
+Futhermore, the allocation table is exhaustive, therefore each
+peer signed their claim and no peer without a channel deposit are allowed to have a claim. 
+From this, third parties can also conclude that the sum of all claims in the
+allocation table is the maximum total deposit that can be consolidated as channel deposits.
+In order to secure full liability, it is stipulated in the validity criteria of allocation tables, that the sum of allocations do not exceed the global soft channel deposit.
 
 If the soft channel deposit allocation table is valid,
 we can with complete certainty know that the global deposit in A's contract
- could cover all outstanding conditional notes handed to B even if all peers were to redeem all outstanding notes.
+ could cover all outstanding conditional notes handed to B even if all peers were to redeem all of their outstanding notes (e.g., by satisfying A's conditional bond).
 Practically this means then that, after receiving a valid allocation table for the epoch from A,
 B has no risk of insolvency when dealing with A's conditional notes.
+To insure a completely risk-free flow of conditional notes, the peers only  need to make sure that the total of their outstanding nodes do not exceed the sum of the current soft channel  deposit and the on-chain channel  deposit. 
+In fact nodes reallocate soft channel deposits to channels where they suspect that in the following epochs the total outstanding amount from conditional bonds and bounties will increase beyond what the channel deposit can cover and deallocate away from the channel if they are not expected to.
+Therefore in a way, hard channel deposits play the role of the payment  threshold in simple swap, whereas soft channel deposits serve are somewhat analogous to cheques or waivers for service-specific collateral against issued service requests. 
 
 In sum, using soft channel deposits enables the chequebook owner to allocate and reallocate funds
 as channel deposits in a fairly flexible way without blockchain transaction costs,
-yet provide $100\%$ solvency guarantees on all active conditional bonds to their peers.
+yet provide $100\%$ solvency guarantees on all active conditional bonds and bounties to their peers.
 
 
 \section{Service guarantees}
-
-\subsection{Service guarantees}
 \label{sec:courtroom}
 
 In the previous section we introduced tools to compensate service providers.
@@ -267,11 +298,19 @@ explicit guarantees of future delivery are required.
 In this section we describe a system of service contracts and dispute resolution.
 Service contracts allow providers (or a set of providers)
 to offer quality and/or delivery guarantees to customers.
-Without loss of generality, we can conceptualise a service contract as a contract
-on the blockchain.
-Nodes can commit to a service contract by registering their address in the contract
-with a transaction or issuing a signed note offchain.
-By committing to this specification providers can be held accountable for non-compliance.
+First we describe how to give service guarantees (swear), then discuss how they can be enforced (swindle).
+Finally we link together the three contracts by showing how 
+
+
+\subsection{Giving service guarantees}
+
+Without loss of generality, we can conceptualise a generic service as described by a game contract
+on the blockchain (see later in \ref{sec:swindle}).
+
+
+Nodes can commit to providing a service by signing against the game contract
+either in a transaction or issuing a signed note offchain.
+By committing to the game contract  providers can be challenged if they don't comply with the rules.
 
 Litigation on the other hand, allows customers to initiate an on-chain court procedure
 in case they suspect foul play. Such accountability is
@@ -290,20 +329,20 @@ suffer loss of reputation. If any demonstrated violation of terms is
 recorded on the public blockchain, users can expect clean histories as a measure
 of reputation.}
 %
-
 By registering on a service contract and putting up a deposit if required, providers
-swear to play by the rules.
+\emph{swear} to play by the rules.
 This deposit is locked up and used later as compensatory insurance transferred to the
 customer, redistributed or burnt.
 
-
-\subsection{Conducting a trial}
+\subsection{Challening a service contract}
+label{sec:swindle}
 
 If a service provider is suspected of non-compliance, they can be challenged
-by opening a case with the swear contract.
+by opening a case with the swear contract analogous to filing a case and have it 
+trialled in the courtroom.
 An abstract trial is composed of stages of litigation, at each stage
 the court procedure calls witnesses and, depending on their testimony,
-advance the trial into the next stage. Witnesses can refuse testimony
+advances the trial into the next stage. Witnesses can refuse testimony
 if evidence is not (yet) available in which case the trial
 is paused until the grace period allowed to submit evidence is over.
 Eventually the trial concludes with a guilty or not guilty verdict followed
@@ -326,11 +365,12 @@ to the respective expert witness associated with the stage. A witness
 is a smart contract that implements the $\mathit{testimonyFor}$ function which takes
 as arguments the provider address, the plaintiff address, and the note id (the hash of the signed note)
 representing the service request.
+
 The \gloss{swindle} contract orchestrates the transition through the stages calling the witness contracts,
 handles grace periods to control the deadline for submitting evidence (challenges or their refutations) to
 eventually reach a guilty/non-guilty verdict on the grounds of witness testimonies.
 In case of a guilty verdict, the deposit sworn on is forfeited and the peer's registration is
-terminated.
+terminated. 
 
 \begin{center}
 \begin{figure}
@@ -379,19 +419,32 @@ the sentence in case of a guilty verdict (G).}
 \end{figure}
 \end{center}
 
+\subsection{Enforcing a guilty verdict}
+
+When a guilty sentence is reached, the swindle contract calls back to the swear contract to enforce the forfeiture of the game deposit. The swear contract act as executor of the sentence, in a way similar to how a court order is observed by the agencies in a position to execute.  
+
+The contract that handles the deposits and registers which node plays which game is called \gloss{swear}.
+The swear contract is a registry from identities to game contracts.%
+%
+\footnote{One can imagine not completely open swear registries which curate a whitelist of safe or recommended games. Similarly to an appstore, these contracts could catalogue service games.}
+%
+An entry is created if provider signs off on a service game contract in an act of commitment. Essentially, the swear contract only needs to record how much deposit each commitment promised and let the swap channel handle the deposit.
+The swear contract can  ask the swap if the provider's deposits exceed the amount dedicated as  swear deposits. This is simply implemented by allocating appropriate amount as channel deposit with the swear contract as beneficiary.
+Commitments are implemented 
+
 
 \section{Service networks}
 
-In this section we describe how the tools for peer-to-peer accounting and data-exchange can
+In this section we describe how the tools for peer-to-peer accounting and data exchange can
 be used to drive the incentives for distributed digital services.
-Assume that a set of nodes form a network that provides a decentalised service.
+Assume that a set of nodes form a network that provides a decentralised service.
 Insured chunk storage in swarm, arbitrary remote payments or database insertion are examples of such services.
 A \gloss{service task} is defined as an instance of service provision. Storing a particular chunk, paying
 an amount to another node or inserting an entry to an index are examples of tasks of the respective network
 service.
 
 In what follows we will work with the assumption that the participating nodes in a service network are
-connected in a kademlia topology and can relay messages to other nodes using kademlia deterministic routing
+connected in a \gloss{kademlia topology} and can relay messages to other nodes using kademlia deterministic routing
 based on direct devp2p transport layer for each hop. In other words service networks are composed of a subset
 of nodes within swarm.
 
@@ -405,7 +458,7 @@ $O(log(n))$ peers where $n$ is the number of nodes in the network.}
 Service networks enable \gloss{indirect transactions} by relaying tasks and deliveries using
 swap-channel transactions on every hop.
 This makes it possible to preserve the scalability and security
-of swap yet extend the scope of transactions both in terms of
+of swap, yet extend the scope of transactions both in terms of
 frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two nodes}.
 Service networks with global provision guarantees further improve the scope by
 offering guaranteed market making and delivery in a direct immediately settling
@@ -442,7 +495,7 @@ each live connection defines a swap channel}
 In general, we define an \emph{indirect transaction} as a chain of swaps between directly connected
 peers. The success of a such indirect transactions between two nodes is dependent on whether and
 how such a chain can be found. Our assumption is that the nodes have semipermanent connectivity
-and form a network topology where routing between any two nodes is guaranteed, e.g., kademlia.
+and form a network topology where routing between any two nodes is guaranteed, e.g., kademlia. As a result, we can assume that as long as all nodes on the chain have a healthy kademlia connectivity, the prerequisite for finding the route is satisfied.
 
 In order to incentivise relaying nodes to take part in such a network,
 a transaction fee for every hop needs to be introduced.  We stipulate that the transaction fee
@@ -460,19 +513,19 @@ funds to cover the amount of the conditional bond.
 For live connections in a service network to be operational,
 parties agree to always having in-channel capacity in the amount of X.
 With soft channel deposits, such throughput restrictions can easily
-be mitigated even on an on-demand basis.
+be relaxed and adjusted even on an on-demand basis.
 
-In addition to swap channels, connected nodes can maintain a \gloss{provable data exchange}.
+In addition to swap channels, connected nodes operate \gloss{provable data exchange}.
 Assume that two nodes participate in a particular service that involve
 relaying objects (such as requests and responses).
 The content addresses (swarm hash) of consecutive objects
 sent one direction constitute a \emph{data stream}.
 Both peers save this stream to swarm and maintain an index mapping the hashes to offsets.
 The upstream peer (sender) calculates the swarm hash of this index and periodically
-signs it against the current blockheight or timestamp as well as the channel id.
+signs it against the current blockheight or timestamp as well as the data stream identitfier.
 This \gloss{handover state} is periodically sent to the downstream peer (receiver)
 who verifies it and preserves it until the next one.
-Downstream peer periodically countersigns the handover state together with an initial
+The downstream peer periodically countersigns the handover state together with an initial
 offset or timestamp. This \gloss{takeover state} is then sent to the upstream peer.
 For instance, the handover state obtained from the upstream peer can be used to prove to third parties
 that an object X was handed over to the downstream peer. This can be done by
@@ -482,9 +535,9 @@ giving an inclusion proof of the hash of X.%
 
 On top of the rewards peers get for relaying, we can introduce additional
 incentives to guarantee that messages reach the recipient.
-If nodes have a stake to lose, punitive measures can be imposed on non-relaying nodes.
-If relaying nodes register on a service contract they promise to relay messages in a data stream
+We can assume that relaying nodes register on a service contract they promise to relay messages in a data stream
 towards the recipient.
+If nodes have a stake to lose, punitive measures can be imposed on nodes that fail or refuse to relay messages in the data stream.
 
 Take our earlier example of A sending a message to remote node D, and assume that
 B, C, and D are all registered relaying nodes that are online. If there is reason
@@ -524,19 +577,18 @@ strategy for any task if requirements
 are uniform across tasks by simply indexing the task requests with their hash.
 
 When a service user issues a bounty to request a service task, the bounty
-is sent towards its address using kademlia routing.
-If hops use provable data streams, the incentives can make sure
-that the appropriate nodes are granted the provision of the task.
+is sent towards the task's address using kademlia routing.
+The node responsible of servicing the task is dynamically defined as the closest node at any point in time.
+If hops use provable data streams, the incentives can make sure that the request (task bounty note) reaches the appropriate nodes and thereby are granted the opportunity to deliver the task.
 
-This node is dynamically defined as the closest node at any point in time.
 For continuous services such as chunk storage, this means that as nodes leave
-and join the network, the node responsible can change over time.
+and join the network, the node responsible for a task can change over time.
 With data exchange proofs however, we can enforce that nodes synchronise historical
-tasks and therefore the allocation can be taken for granted, i.e., the network
+task requests and therefore the allocation can be taken for granted, i.e., the network
 can perform dynamic load-balancing of previously submitted future tasks even though
 the network is changing.
 
-In order to benefit from the allocated tasks by cashing the bounties, the distribution
+In order to benefit from the allocated tasks by cashing the bounties on delivery, the distribution
 should be incentivised. In particular relaying nodes are not supposed to withhold
 tasks in hope of cashing the bounty themselves.
 To guarantee that downstream peers do get forwarded all the tasks and bounties,
@@ -564,20 +616,17 @@ participant node, catastrophic failure of an entire node can cause limited damag
 Since the required deposit is meant to collateralise this risk, it is reasonable to
 set it to a fixed amount across all provider nodes.}
 
-When the issuer receives the receipt for its bounty (takeover proof or receipt)
-it has all it is needed to start finger pointing which is equivalent to
-instant guarantees that the service will be provided,
-even though it is unknown at the time by which node.
+When the original issuer of the task request receives the receipt for its bounty (takeover proof) from its immediate peer,
+they have all that is needed to start finger pointing after the deadline for the service task passed. In other words, service users have \emph{instant guarantees} that the service will be provided for the task they request, even though it is unknown at the time by which node.
 
 This type of service network is called \gloss{warranted automatic service provision (WASP)} network.
-Since one can thus obtain enforcable service contracts immediately
-in one swap exchange, WASP networks allow users to \emph{request and disappear}.
+Since one can thus obtain instant enforcable service guarantees 
+in one swap exchange, WASP networks allow users to \gloss{request and disappear}. Applying this scheme to swarm insured storage, given a WASP network of storage nodes, swarm users can \emph{upload and disappear}.
 
 \section{Pricing in service networks}
 
-The problem of pricing appears already when we
-
 \subsection{Reverse auction for competitive bounties}
+
 \subsection{Signalling capacity overload}
 \subsection{Service networks for stablecoins}
 

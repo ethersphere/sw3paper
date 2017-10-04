@@ -1,12 +1,43 @@
-\subsection{Waivers}
+\subsection{Cancelling Cheques}
 
 If the imbalance in the swap channel is the result of high variance as opposed to unequal consumption, after a period of accumulating cheques the channel balance starts tilting the other way. Normally it is now up to the other party to issue cheques to its peer resulting in uncashed cheques accumulating on both sides.
-To allow for further savings in transaction costs, it would be desirable to be able to `play the cheques off against each other'.
+To allow for further savings in transaction costs, it could be desirable to be able to `play the cheques off against each other'.
 
-Such a process is possible, but it requires certain deep changes within the chequebook contract. In particular, cashing cheques can no longer be immediate and must incur a security delay, familiar to anyone who has studied other implementations of state channels.
+Such a process is possible, but it requires certain deep changes within the chequebook contract. In particular, cashing cheques can no longer be immediate and must incur a security delay, familiar to anyone who has studied other implementations of payment channels.
 
 Let us imagine a system analogous to cheques being returned to the issuer.  
-Assume peer A issued cheques to B and the balance was brought back to zero. Now the balance tilts in A's favour but the cheques from A to B have not been cashed. In this scenario, instead of sending a cheque to A, B can waive part of their entitlement. This justifies swap as \emph{send waiver as payment} (see figure \ref{fig:waiverswap}).
+Assume peer A issued cheques to B and the balance was brought back to zero. Later the balance tilts in A's favour but the cheques from A to B have not been cashed. In the real world, user B could simply return the last cheque back to A. In our case it is not so simple; we need some other mechanism by which B commits not to cash that particular cheque. Such a commitment could take many forms; it could be implemented by B signing a message allowing A to issue a new `last cheque` which has a lower cumulative total amount than before, or perhaps B can issue some kind of `negative` cheque for A's chequebook.
+
+What all the implementations have in common, is that the chequebook can no longer allow instantaneous cashing of cheques. Upon receiving a cheque cashing request, the contract must wait to allow the other party in question to submit potentially missing information about cancelled cheques or reduced totals. 
+
+We describe one possible implementation below.
+
+\subsubsection{Waiving debt: bidirectional payments using a single chequebook }\label{subsubsec:waivingdebt}
+
+To accommodate (semi-)bidirectional payments using a single chequebook we make the following modifications
+
+\begin{enumerate}
+    \item All cheques from user A to user B must contain a serial number.
+    \item Each new cheque issued by A to B must increase the serial number.
+    \item A's chequebook contract records the serial number of the last cheque that B cashed.
+    \item During the cashing delay, valid cheques with higher serial number supersede any previously submitted cheques regardless of their face value.
+    \item Any submitted cheque which decreases the payout of the previously submitted cheque is only valid if it is signed by the beneficiary.
+\end{enumerate}
+
+With these rules in place it is easy to see how cheque cancellation would work. 
+
+
+Suppose user A has issued cheques $c_0 \ldots c_n$ with cumulative totals $t_0 \ldots t_n$ to user B. Suppose that the last cheque B cashed was $c_i$. The chequebook contract has recorded that B has received a payout of $t_i$ and that the last cheque cashed had serial number $i$.
+
+Let us further suppose that the balance starts tilting in A's favour by some amount $x$. If B had already cashed cheque $c_n$, then B would now have to issue a cheque of her own using B's chequebook as the source and naming A as the beneficiary. However, since cheques $c_{i+1} \ldots c_n$  are uncashed, B can instead send to A a cheque with A's chequebook as the source, B as the beneficiary, with serial number $n+1$ and cumulative total $t_{n+1} = t_n - x$. Due to the rules enumerated above, A will accept this as equivalent to a payment of amount $x$ by B.
+
+This process can be repeated multiple times until the cumulative total is brought back to $t_i$. At this point all outstanding debt has effectively been cancelled and any further payments must be made in the form of a proper cheque from B's chequebook to A.
+
+
+\textbf{Suggestion - delete the rest of this subsection.}
+
+
+In this scenario, instead of sending a cheque to A, B can waive part of their entitlement. This justifies swap as \emph{send waiver as payment} (see figure \ref{fig:waiverswap}).
 A waiver essentially implements a proof that a cheque is destroyed and cannot be cashed, i.e., a promise that (part of) an uncashed cheque will not be redeemed.
 
 A \gloss{waiver} is implemented as a note signed by the peer holding uncashed cheques %. The note specifies the current \gloss{swap index} (sequential number) 
@@ -28,7 +59,7 @@ During the grace period the amount is not checked against the book's global bala
 After the grace period expires and no waiver was received, a second transaction
 increments the swap cycle index and simply releases the funds or defaults on its debt.
 During the grace period, further cheques can be sent to the contract: if they are valid and have the same swap cycle index as the one currently recorded, they simply replace the earlier one and the grace period is renewed.
-Since waivers need to match the swap cycle index set by the cheques they destroy, they cannot be sent to the contract before the cheques they waive or after +a new swap cycle starts.
+Since waivers need to match the swap cycle index set by the cheques they destroy, they cannot be sent to the contract before the cheques they waive or after a new swap cycle starts.
 
 In normal operation, however, peers are not incentivised to send in cheques as long as they can issue waivers. Once the waiver goes over the total amount of uncashed cheques, the peer needs to send a cheque. The swap cycle index is incremented in this cheque and the basis for issuing is the channel balance stored on the chain. This makes sure that cheques and waivers cannot be reused.%
 %
