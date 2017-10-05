@@ -53,7 +53,8 @@ With this mechanism in place, the chequebook is now almost equivalent to a full 
 
 Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is of functionally equivalent to a full payment channel; with the exception that states can not be `save on-chain' without an actual transfer. In a real payment channel the contract can update the relative balance - how much of the tied up collateral belongs to A and how much belongs to B - but in the chequebook implementation such a re-balancing necessarily involves a transfer from one chequebook contract to the other. Furthermore, advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network.
 
-Nevertheless, the simplicity of the chequebook implementation has some advantages of its own: the ability to gradually add features as they are needed and the ability to onboard new users at zero cost to them.
+Nevertheless, the chequebook implementation has the advantage that it can start out simple with features can being added gradually as they are needed.
+
 
 
 % \textbf{Suggestion: delete the rest of this subsection}
@@ -114,17 +115,16 @@ Nevertheless, the simplicity of the chequebook implementation has some advantage
 
 A tremendous advantage of swap accounting is that new users can begin to provide services and earn rewards without owning any ether initially.
 
-Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds (\gloss{insider}), the newcomer begins to provide the service (and not use it)
-in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of their own.
+Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds (\gloss{insider}), the newcomer begins to provide the service (and not use it) in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of her own.
 In short, even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pays the newcomers on-chain. 
 
-If the insider has a chequebook and wishes to pay the newcomer with a cheque, this is also possible, but there is a caveat here in that cashing cheques requires a gas expenditure\footnote{although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout}. The newcomer will be able to earn cheques for services provided, but will not have the means to cash them. 
+If the insider has a chequebook and wishes to pay the newcomer with a cheque, this is also possible, but there is a caveat here in that cashing cheques requires a gas expenditure\footnote{although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout.}. The newcomer will be able to earn cheques for services provided, but will not have the means to cash them. 
 
-% This gas-cost bootstrapping problem is fundamental and cannot be circumvented without a direct on-chain payment. However it is surprising just how far we can get without it. It is possible for example to on-board newcomers to the point at which they have their own chequebook contract and are able to issue cheques as payments to third parties. That scheme would work as follows:
-% 
-% A newcomer connects to  an insider with an existing chequebook contract. The insider consumes the newcomers services and instead of issuing a cheque, the insider agrees to create a chequebook contract for the newcomer. In other words, when the insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once the newcomer has her own chequebook contract, she is able to consume services and issue cheques to pay for them.
-% 
-% In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) some extra service fee to incentivise insiders to lend.
+This gas-cost bootstrapping problem is fundamental and cannot be circumvented without a direct on-chain payment. However it is surprising just how far we can get without it. It is possible for example to on-board newcomers to the point at which they have their own chequebook contract and are able to issue cheques as payments to third parties. That scheme would work as follows:
+ 
+A newcomer connects to  an insider with an existing chequebook contract. The insider consumes the newcomers services and instead of issuing a cheque, the insider agrees to create a chequebook contract for the newcomer. In other words, when the insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once the newcomer has her own chequebook contract, she is able to consume services and issue cheques to pay for them.
+ 
+In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) possibly some extra service fee to incentivise insiders to provide this kind of service.
 % 
 % With the global deposit included, this cost of bootstrapping can be substantially higher than the newcomers loss tolerance. If the newcomers chequebook is to be deployed only after newcomer provided service totalling the cost, then the insider node could disappear after essentially leeching on the newcomer. On the other hand, if it is deployed to the blockchain in advance, then it is the newcomer who can just disappera and move with their new topped-up wallet to other peers leaving the lender node with a loss. 
 % 
@@ -173,6 +173,6 @@ If the insider has a chequebook and wishes to pay the newcomer with a cheque, th
 % Signed notes are not only useful for newcomers; anyone without a blockchain connection
 % will be able to interact and provide services without losing the security of the blockchain.
 % 
-% To summarise, by serving before consuming, participants can
-% bootstrap their way into swap without the need for funds.
-% Hence swap is justified as (\emph{setting up a wallet as payment}).
+%
+
+To summarise, by serving before consuming, participants can bootstrap their way into swap without the need for funds. Hence swap is justified as (\emph{setting up a wallet as payment}).

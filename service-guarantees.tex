@@ -1,0 +1,144 @@
+\section{Service guarantees}
+\label{sec:courtroom}
+
+In the previous section we introduced tools to compensate service providers.
+While rewards are paid out only if delivery is successful,
+such positive incentivisation may be insufficient if
+explicit guarantees of future delivery are required.
+
+In this section we describe a system of service contracts and dispute resolution.
+Service contracts allow providers (or a set of providers)
+to offer quality and/or delivery guarantees to customers.
+First we describe how to give service guarantees (swear), then discuss how they can be enforced (swindle).
+Finally we link together the three contracts by showing how 
+
+
+\subsection{Giving service guarantees}
+
+Without loss of generality, we can conceptualise a generic service as described by a game contract
+on the blockchain (see later in \ref{sec:swindle}).
+
+
+Nodes can commit to providing a service by signing against the game contract
+either in a transaction or issuing a signed note offchain.
+By committing to the game contract  providers can be challenged if they don't comply with the rules.
+
+Litigation on the other hand, allows customers to initiate an on-chain court procedure
+in case they suspect foul play. Such accountability is
+crucial for the design of scalable decentralised service economies.
+
+We will describe the trial process for dispute
+resolution that first evaluates the evidence against the accused provider.
+The verification is the same as the one used in the process of sanctioning outpayments,
+but once a provider is proven guilty by the court on the grounds of
+conditions specified in the service contract, various punitive measures will be
+automatically enforced. In most cases, this comprises losing some deposit that
+provider previously locked up as collateral to back their promise.%
+%
+\footnote{Instead of or in addition to losing their deposits, nodes would also
+suffer loss of reputation. If any demonstrated violation of terms is
+recorded on the public blockchain, users can expect clean histories as a measure
+of reputation.}
+%
+By registering on a service contract and putting up a deposit if required, providers
+\emph{swear} to play by the rules.
+This deposit is locked up and used later as compensatory insurance transferred to the
+customer, redistributed or burnt.
+
+\subsection{Challening a service contract}
+label{sec:swindle}
+
+If a service provider is suspected of non-compliance, they can be challenged
+by opening a case with the swear contract analogous to filing a case and have it 
+trialled in the courtroom.
+An abstract trial is composed of stages of litigation, at each stage
+the court procedure calls witnesses and, depending on their testimony,
+advances the trial into the next stage. Witnesses can refuse testimony
+if evidence is not (yet) available in which case the trial
+is paused until the grace period allowed to submit evidence is over.
+Eventually the trial concludes with a guilty or not guilty verdict followed
+by automatically enforced punitive measures in the former case or
+compensation to the accused in the latter.
+
+The specific service contract describes the rules of the service
+by assigning particular expert witnesses to trial stages. These witnesses
+evaluate evidence submitted to them in relation to the case
+and give testimony if asked by the judge.
+The request--response process between the judge and the witnesses can
+thus be standardized
+even though they each may require different data to be submitted to them as evidence.
+
+To implement such an abstract dispute resolution system
+the trial is described by a finite state automaton, the states of which correspond
+to stages of litigation and
+the transitions are labeled by various outcomes of evaluating evidence submitted
+to the respective expert witness associated with the stage. A witness
+is a smart contract that implements the $\mathit{testimonyFor}$ function which takes
+as arguments the provider address, the plaintiff address, and the note id (the hash of the signed note)
+representing the service request.
+
+The \gloss{swindle} contract orchestrates the transition through the stages calling the witness contracts,
+handles grace periods to control the deadline for submitting evidence (challenges or their refutations) to
+eventually reach a guilty/non-guilty verdict on the grounds of witness testimonies.
+In case of a guilty verdict, the deposit sworn on is forfeited and the peer's registration is
+terminated. 
+
+\begin{center}
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2c m,
+                    semithick]
+  \tikzstyle{witness}=[fill=orange!50,draw]
+  % \tikzstyle{every state}=[fill=gray!10,draw]
+
+  \node[initial,state] (S)                    {$S$};
+  \node[state,witness]         (W0_1) [above right of=S] {$w_0$};
+  \node[state,witness]         (W0_2) [below right of=S] {$w_0$};
+  \node[state,fill=green!60]         (N/G) [below right of=W0_1] {$N/G$};
+  \node[state,witness]         (W1) [above right of=N/G] {$w_1$};
+  \node[state,witness]         (W2) [below right of=N/G] {$w_2$};
+  \node[state,witness]         (W3) [below right of=W1] {$w_3$};
+  \node[state,fill=red!60]         (G) [right of=W3]       {$G$};
+
+  \path (S) edge   node {$A_0$} (W0_1)
+            edge   node {$A_1$} (W0_2)
+        (W0_1) edge [loop above] node {n/a} (W0_1)
+            edge [red,thick]             node {T} (W1)
+            edge [green,thick]             node {F} (N/G)
+        (W0_2) edge [loop below] node {n/a} (W0_2)
+            edge [red,thick]             node {T} (W2)
+            edge [green,thick]             node {F} (N/G)
+        (W1) edge [loop above] node {n/a} (W1)
+            edge [red,thick]             node {T} (W3)
+            edge [green,thick]             node {F} (N/G)
+        (W2) edge [loop below] node {n/a} (W2)
+            edge  [red,thick]            node {T} (W3)
+            edge  [green,thick]            node {F} (N/G)
+        (N/G) edge              node {*} (S)
+        (W3) edge [loop below] node {n/a} (W3)
+            edge  [green,thick]            node {F} (N/G)
+            edge [red,thick]  node {T} (G);
+\end{tikzpicture}
+\end{center}
+\caption{Trial stages represented as a finite state automaton describing a service contract.
+Upon receiving an accusation ($A_0$ or $A_1$) in a transaction, the case contract moves to the first litigation state.
+The orange circles represent states where a witness contract is called, the following state depends on
+the outcome of the witness testimony (the return value of the $\mathit{testimonyFor}$ function call).
+The other nodes call the internal $\mathit{process}$ function: to pay compensation if the challenge is refuted (N/G) or enforce
+the sentence in case of a guilty verdict (G).}
+\label{fig:servicecontract}
+\end{figure}
+\end{center}
+
+\subsection{Enforcing a guilty verdict}
+
+When a guilty sentence is reached, the swindle contract calls back to the swear contract to enforce the forfeiture of the game deposit. The swear contract act as executor of the sentence, in a way similar to how a court order is observed by the agencies in a position to execute.  
+
+The contract that handles the deposits and registers which node plays which game is called \gloss{swear}.
+The swear contract is a registry from identities to game contracts.%
+%
+\footnote{One can imagine not completely open swear registries which curate a whitelist of safe or recommended games. Similarly to an appstore, these contracts could catalogue service games.}
+%
+An entry is created if provider signs off on a service game contract in an act of commitment. Essentially, the swear contract only needs to record how much deposit each commitment promised and let the swap channel handle the deposit.
+The swear contract can  ask the swap if the provider's deposits exceed the amount dedicated as  swear deposits. This is simply implemented by allocating appropriate amount as channel deposit with the swear contract as beneficiary.
+Commitments are implemented 

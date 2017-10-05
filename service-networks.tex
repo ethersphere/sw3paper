@@ -1,0 +1,190 @@
+\section{Service networks}
+
+In this section we describe how the tools for peer-to-peer accounting and data exchange can
+be used to drive the incentives for distributed digital services.
+Assume that a set of nodes form a network that provides a decentralised service.
+Insured chunk storage in swarm, arbitrary remote payments or database insertion are examples of such services.
+A \gloss{service task} is defined as an instance of service provision. Storing a particular chunk, paying
+an amount to another node or inserting an entry to an index are examples of tasks of the respective network
+service.
+
+In what follows we will work with the assumption that the participating nodes in a service network are
+connected in a \gloss{kademlia topology} and can relay messages to other nodes using kademlia deterministic routing
+based on direct devp2p transport layer for each hop. In other words service networks are composed of a subset
+of nodes within swarm.
+
+Scalability of
+swap channels is based on the premise that directly connected nodes engage in long-term repeated
+dealings and can afford setting up contracts on the blockchain to secure their interaction.%
+%
+\footnote{Given the semipermanent connections of the TCP based kademlia of swarm, peers interact with
+$O(log(n))$ peers where $n$ is the number of nodes in the network.}
+%
+Service networks enable \gloss{indirect transactions} by relaying tasks and deliveries using
+swap-channel transactions on every hop.
+This makes it possible to preserve the scalability and security
+of swap, yet extend the scope of transactions both in terms of
+frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two nodes}.
+Service networks with global provision guarantees further improve the scope by
+offering guaranteed market making and delivery in a direct immediately settling
+swap transaction. As a result non-participating users can just \emph{request and disappear}.
+
+\subsection{Incentivisation for relaying}
+
+Let's assume that nodes A,B,C,D are participant peers of a service network such that
+A-B, B-C and C-D are direct connections with a swap channel.
+Assume further that A intends to do some ad-hoc one-off business with D. To this end
+ A issues a conditional bond specifying an escrow
+condition that some data be obtained from D constituting the proof of delivery of the task.
+
+A then sends the conditional bond to B as beneficiary, B receives the conditional bond
+and issues the same bond
+only this time with C as beneficiary. C is directly connected to D, so
+it just relays the same to D who issues a receipt (or takeover proof).
+Each of these steps is implemented as swaps of conditional notes. The moment C receives
+the receipt, it is incentivised to pass it back to B as an invoice to prompt
+settlement. The same is true for B and any number of intermediate relaying nodes
+(see figure \ref{fig:swapchannelnetwork}).
+
+\begin{center}
+\begin{figure}
+\begin{center}
+\end{center}
+\caption{Swap channel network: peer to peer network of nodes with semipermanent TCP connections organised in
+a kademlia topology. Given nodes have an associated identity owning a chequebook contract,
+each live connection defines a swap channel}
+\label{fig:swapchannelnetwork}
+\end{figure}
+\end{center}
+
+In general, we define an \emph{indirect transaction} as a chain of swaps between directly connected
+peers. The success of a such indirect transactions between two nodes is dependent on whether and
+how such a chain can be found. Our assumption is that the nodes have semipermanent connectivity
+and form a network topology where routing between any two nodes is guaranteed, e.g., kademlia. As a result, we can assume that as long as all nodes on the chain have a healthy kademlia connectivity, the prerequisite for finding the route is satisfied.
+
+In order to incentivise relaying nodes to take part in such a network,
+a transaction fee for every hop needs to be introduced.  We stipulate that the transaction fee
+for one swap is proportional to the logarighmic distance that the hop spans.
+As a consequence, the simple rational strategy to maximise profit will incentivise nodes to find the
+closest node when relaying as well as maintain a healthy connectivity that is the
+prerequisite for successful routing.
+Furthermore, the entire transaction fee can be precalculated as proportional
+to the distance between sender and remote beneficiary and therefore can be offered in advance
+when issuing the conditional bond.
+
+This construct is
+equivalent to message relaying with \gloss{certified delivery}, except that nodes are required to have
+funds to cover the amount of the conditional bond.
+For live connections in a service network to be operational,
+parties agree to always having in-channel capacity in the amount of X.
+With soft channel deposits, such throughput restrictions can easily
+be relaxed and adjusted even on an on-demand basis.
+
+In addition to swap channels, connected nodes operate \gloss{provable data exchange}.
+Assume that two nodes participate in a particular service that involve
+relaying objects (such as requests and responses).
+The content addresses (swarm hash) of consecutive objects
+sent one direction constitute a \emph{data stream}.
+Both peers save this stream to swarm and maintain an index mapping the hashes to offsets.
+The upstream peer (sender) calculates the swarm hash of this index and periodically
+signs it against the current blockheight or timestamp as well as the data stream identitfier.
+This \gloss{handover state} is periodically sent to the downstream peer (receiver)
+who verifies it and preserves it until the next one.
+The downstream peer periodically countersigns the handover state together with an initial
+offset or timestamp. This \gloss{takeover state} is then sent to the upstream peer.
+For instance, the handover state obtained from the upstream peer can be used to prove to third parties
+that an object X was handed over to the downstream peer. This can be done by
+giving an inclusion proof of the hash of X.%
+%
+\footnote{Upstream peer can be challenged to give an inclusion proof.}
+
+On top of the rewards peers get for relaying, we can introduce additional
+incentives to guarantee that messages reach the recipient.
+We can assume that relaying nodes register on a service contract they promise to relay messages in a data stream
+towards the recipient.
+If nodes have a stake to lose, punitive measures can be imposed on nodes that fail or refuse to relay messages in the data stream.
+
+Take our earlier example of A sending a message to remote node D, and assume that
+B, C, and D are all registered relaying nodes that are online. If there is reason
+to believe that the message did not reach D, A can challenge B by simply providing
+the takeover proof for the message. B can defend itself by providing takeover proof from C,
+thereby shifting the blame to C for blocking the delivery. C in turn can show takeover proof
+from D to refute the challenge. It can also happen that C indeed did not forward the message
+because there was no node closer to D among its peers. But this means that
+D is a nearest neighbour of C, in which case D should have been connected to C.
+Therefore D can be challenged to prove that it was connected to C. D can respond to the challenge
+by showing handover state obtained from C dated after the message delivery deadline. This in turn is
+a challenge to C to show the inclusion proof of the message against the handover state.
+This pattern is called \gloss{finger pointing} and constitutes the investigative part
+of litigation which results in identifying the node
+ultimately responsible for failed delivery by not relaying.
+Finger pointing essentially implements \emph{guaranteed delivery}.
+
+\subsection{Uniform resource allocation and market making}
+
+In the previous section we just assumed that A knew about D (from an independent source).
+In case there are other nodes as well that can in theory perform the same task,
+a bounty is sent to potentially multiple addresses of candidate providers
+and an implicit market making mechanism is obtained by certified delivery.
+
+Assume the tasks of a service network can be provided by any participating node using
+the same amount of resources. Given a network of willing providers, a system can be designed
+called \gloss{global resource allocation by network topology (GRANT)}
+such that tasks are distributed more or less uniformly across the network.
+
+For instance, this is the case with storage in swarm:
+each task of storage provision involves storing a fixed-size chunk of data.
+We index the chunks with their content address (swarm hash) and allocate the storage task
+to nodes whose address is closest to the chunk address.
+Since both nodes and chunks are uniformly distributed in the same address space,
+this strategy implements uniform load balancing. We can generalise this allocation
+strategy for any task if requirements
+are uniform across tasks by simply indexing the task requests with their hash.
+
+When a service user issues a bounty to request a service task, the bounty
+is sent towards the task's address using kademlia routing.
+The node responsible of servicing the task is dynamically defined as the closest node at any point in time.
+If hops use provable data streams, the incentives can make sure that the request (task bounty note) reaches the appropriate nodes and thereby are granted the opportunity to deliver the task.
+
+For continuous services such as chunk storage, this means that as nodes leave
+and join the network, the node responsible for a task can change over time.
+With data exchange proofs however, we can enforce that nodes synchronise historical
+task requests and therefore the allocation can be taken for granted, i.e., the network
+can perform dynamic load-balancing of previously submitted future tasks even though
+the network is changing.
+
+In order to benefit from the allocated tasks by cashing the bounties on delivery, the distribution
+should be incentivised. In particular relaying nodes are not supposed to withhold
+tasks in hope of cashing the bounty themselves.
+To guarantee that downstream peers do get forwarded all the tasks and bounties,
+upstream peers can be challenged when they cash a bounty:
+if there is a valid handover proof of connection (synchronisation)
+for the relevant period after the bond was issued, upstream peer can be challenged
+for not relaying it (but withholding). Conversely, the bounty outpayment can be challenged
+if the candidate provider is not the closest node to the task, i.e., a downstream peer closer to
+the task address can show connectivity during the relevant period. Withholding if proven could
+result in the same punitive measure as failing to deliver.
+
+
+Service nodes that are capable of staying online can choose to register
+and put up a deposit as collateral.
+One consequence of GRANT is that for each task, there is a node (or set of neighbouring nodes)
+that is responsible for delivering the task and can ultimately be held liable
+for non-delivery. Using the swindle scheme for litigation, if proven guilty a node's
+collateral is forfeited.
+Since individual punitive measures are a very
+effective incentive, service guarantees can be given independent of the
+positive incentivisation (the reward for delivery implicit in the bounty).%
+%
+\footnote{Since the amount of tasks (and therefore capacity requirements) are roughly uniform for each
+participant node, catastrophic failure of an entire node can cause limited damage.
+Since the required deposit is meant to collateralise this risk, it is reasonable to
+set it to a fixed amount across all provider nodes.}
+
+When the original issuer of the task request receives the receipt for its bounty (takeover proof) from its immediate peer,
+they have all that is needed to start finger pointing after the deadline for the service task passed. In other words, service users have \emph{instant guarantees} that the service will be provided for the task they request, even though it is unknown at the time by which node.
+
+This type of service network is called \gloss{warranted automatic service provision (WASP)} network.
+Since one can thus obtain instant enforcable service guarantees 
+in one swap exchange, WASP networks allow users to \gloss{request and disappear}. Applying this scheme to swarm insured storage, given a WASP network of storage nodes, swarm users can \emph{upload and disappear}.
+

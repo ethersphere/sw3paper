@@ -1,0 +1,207 @@
+\section{Escrow conditions on future payments}
+
+\gloss{Promissory notes} represent redeemable promises of payment potentially maturing in the future. We define the general notion of a note as a promise that entitles a beneficiary to future payment under a condition. Since this effectively puts the money in an escrow, the condition can also be referred to as an \gloss{escrow condition}. A promissory note can contain the following optional fields:
+
+  \begin{itemize}
+    \item swap cycle index
+    \item amount
+    \item beneficiary
+    \item escrow address
+    \item valid from
+    \item valid until
+    \item remark
+  \end{itemize}
+
+In the simplest case no escrow condition or maturation date is given: such a note represents a simple cheque as discussed above. The maturation date (blockheight or timestamp) can be specified to indicate the earliest
+possible occasion a note can be redeemed (valid from) as well as a deadline when the promise expires unless its escrow condition is satisfied (valid until). 
+
+\subsection{Recurring payments}
+
+The cheque represents an adhoc promise to redeem an amount. The transfer of funds is sanctioned by a cheque issued for each occasion. There is, however, services where recurring payments are predictable and therefore the installments can be sanctioned in advance. The primary usecase is subscription services. This could be implemented by storing a whitelist of contract addresses that are allowed to withdraw from the chequebook balance. For simplicity, however, we choose to represent this analogously to cashing a cheque. Authorising a recurring payment to a contract is done by signing a blank cheque (a cheque with an unspecified amount) against the beneficiary possibly with a valid until date. Such beneficiaries are smart contracts and therefore no defense against false amount is needed. Receiving transfer request transactions is independent of the swap state of cumulative amount and simply withdraws the amount from the global balance or the channel deposit of the owner.
+
+\subsection{Bonds}
+
+A note with an amount and beneficiary and a future valid from data is effectively a bond. The amount factors in all outstanding payment obligations the beneficiary is entitled to once the bond matures including interest. When such a note is not collateralised at the time of issuing, accepting the bond is equivalent to granting a loan on the grounds of the credit history of the account. 
+\subsection{Escrow conditions and escrow witnesses}
+
+If an escrow address is specified in the note, the referenced contract can be used to verify the condition of redemption. When the escrow condition is verified, the owner, the beneficiary address, and the note id (the hash of the signed note) are passed as arguments to the {\gloss{testimonyFor}} method of the escrow contract. By implementing this method the contract conforms to the \gloss{witness} contract  interface (section \ref{sec:courtroom}). Given the witness contract, the escrow condition is implicitly defined as whatever state makes the escrow witness give a positive testimony. 
+
+A note with an escrow field specified is called a \gloss{conditional bond} and can represent a \gloss{service contract} with the escrow condition describing successful delivery. In a real-life scenario, upon verification of an instance of service provision or purchase of a good, the escrow acknowledges the delivery before releasing the funds. This is implemented by the chequebook calling the escrow witness contract to give a testimony. In case the condition is fully verifiable algorithmically in the VM, the entire transaction remains within the closed system, there is no real-world liability and the transfer is enforceable.
+
+If no beneficiary is specified, a conditional note is essentially a \gloss{bounty}. A bounty is meant to be published or broadcast to a set of known service providers. Bounties will play a crucial role in certain types of service networks, discussed in section \ref{sec:wasp}. Figure \ref{fig:taxonomy} summarises the various types of promissory notes.
+
+
+\newcommand{\tick}{\checkmark}
+\newcommand{\opt}{?}
+\begin{center}
+\begin{figure}
+\begin{center}
+\begin{tabular}{|l|r||c|c|c|c|c|c|c|}
+\hline
+note & fields
+& swap cycle index
+& amount
+& beneficiary
+& escrow
+& valid from
+& valid until
+& remark
+\\
+\cline{2-9}
+
+type & type 
+& int256
+& int256
+& address
+& address
+& int256
+& int256
+& byte32
+\\
+\hline
+\hline
+\multicolumn{2}{|l||}{cheque}   & \tick & \tick & \tick & & & \opt& \opt
+\\
+\multicolumn{2}{|l||}{authorisation} &  & \tick & \tick & & & \opt& \opt
+\\
+\multicolumn{2}{|l||}{bond} & \tick & \tick & \tick & & \tick & \opt& \opt
+\\
+\multicolumn{2}{|l||}{conditional bond} &  & \tick & \tick & \tick & \tick & \opt& \opt
+\\
+\multicolumn{2}{|l||}{bounty} & \tick &  \tick & & \tick & \tick & \opt& \opt
+\\
+\multicolumn{2}{|l||}{soft channel deposit} &  \tick & \tick & & & && \opt
+\\
+\hline
+\end{tabular}
+\end{center}
+\caption{Taxonomy of promissory notes: '\tick' indicates a mandatory field, types show the corresponding solidity type to encode in the ABI. '?' indicates optional field.}
+\label{fig:taxonomy}
+\end{figure}
+\end{center}
+
+
+% \subsection{Secure escrow and liquidity}
+
+\subsection{Conditional bond, invoice, and cheque}
+
+Let us assume that node A issues a conditional note (or bounty) to B with expiry at time T.
+T represents the earliest time that A can consider the note unfulfilled (the service undelivered), before
+that we say that the note is \emph{active}.
+
+If B fulfills the condition, it notifies A of successful delivery
+by sending an \gloss{invoice} containing the hash of the note and the current cumulative balance they want the
+amount to be added to. The invoice is supposed to represent the balance at delivery, and serves to
+indicate that the subsequent cheque will be the one to pay the outstanding amount for the note.
+As a response A is expected to send a cheque with an updated channel balance reflecting the
+payment of the invoice (the amount in the conditional note is added to the cumulative total).
+If A refuses to do this, B can send the conditional note in a transaction
+to  the contract. When the witness validates the delivery condition, and the testimony is
+positive, the amount goes to escrow and a grace period starts.
+During the grace period, A can settle the claim by sending in the appropriate cheque.
+
+If the note condition does not check out, B's challenge will cost them the transaction.
+Even if it does, they won't gain anything by the challenge if they did receive the
+cheque from A since they still needed to send the proof in a transaction.
+Therefore B is disincentived to initiate frivolous challenges.
+Conversely, A is incentivised to send the cheque to B after it receives the invoice,
+otherwise it is A that needs to pay the transaction cost of sending in the cheque upon B's correct challenge.
+We therefore conclude that the optimal behaviour for A and B is offchain exchange of invoice and cheque.
+
+\subsection{Soft channel deposits}
+A nonmaturing cheque is a deposit locked up as collateral to secure varying balance.
+The total value of these deposits serve as guaranteed collateral for any debt and
+therefore conceptually equivalent to a channel deposit.
+In the following we describe a construct which gives 100$\%$ guarantee of solvency
+on outstanding conditional bonds without explicitly assigning deposits to channels on chain.%
+%
+\footnote{In the on-chain case channel deposits are explicitly stored in the contract, therefore overspending
+(using the amount to collateralise multiple creditors) is impossible.}
+
+Let us assume A and B both maintain an ordered list of active conditional notes issued by A.
+Each time A issues a conditional note or pays for a fulfilled one or one expires, the list is updated.
+The hashes of active notes in order of issuance is organised in a swarm tree, the
+root hash of which is signed by B and passed to A together with a so called
+\gloss{soft channel deposit claim}. This claim constitutes an acknowledment of
+the outstanding liabilities of A towards B. Assume further that there exist a notion of \gloss{epoch},
+a fixed settlement period at the end of which B needs to sign off on the total sum of active
+outstanding conditional notes issued by A to B.
+Formally, soft channel deposit claim is a note with the following fields:
+
+\begin{itemize}
+  \item A's contract address
+  \item the total sum of all active outstanding conditional notes
+  \item the epoch index
+\end{itemize}
+
+With each epoch, B signs the note and sends it to A.
+Peer A can verify if the soft claim is correct and terminate dealings if not. In such a case soft claim of
+the last epoch is taken, whereby A cancels its liability to the conditional notes issued since
+the last epoch.
+B is incentivised to send the correct soft claim if they want business with A fulfilling their
+conditional notes.
+
+After A receives soft channel deposit claims from all peers for the epoch, the claims are
+collected in a list (ordered according to the peer index of the beneficiary in A's swap contract).
+A signs the swarm hash of the (concatenated) list and sends it alongside the list
+in a construct called a \gloss{soft channel deposit allocation table} to each peer.
+Upon receiving the soft channel deposit allocation table, B verifies that
+(1) the total sum of channel deposits allocated is no greater than the global deposit and
+(2) the amount dedicated to B is no less than the sum of all outstanding active
+conditional notes issued by A to B.
+(3) each active peer in A's swap contract has a corresponding claim for the current epoch and the signature is valid.
+This process in illustrated in figure \ref{fig:softchanneldeposit}
+
+
+\begin{center}
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+\end{tikzpicture}
+\end{center}
+\caption{Soft channel deposit}
+\label{fig:softchanneldeposit}
+\end{figure}
+\end{center}
+
+
+
+
+At any point in time, soft channel deposit claims can be consolidated to actual
+channel deposits.
+The soft channel deposit claim is sent in with the inclusion proof of the claim against the root hash of the
+current channel deposit allocation table as a transaction to the
+chequebook contract. Upon receiving and validating the claim (signature, resource and epoch verified),
+the contract simply reallocates the claimed amount from the global deposit to the channel.
+If each peer does this, the global deposit is reduced with the total of soft channel
+deposits.%
+%
+\footnote{To save all peers the trouble of sending inclusion proofs, when A initiates withdrawal from
+their global deposit, they need to submit current allocation table starting a grace period during which
+creditors are invited to challenge the allocation by presenting a contradicting claim.}
+
+Once the channel deposit (of A towards B) is secured on chain, all the outstanding conditional notes
+issued to B are guaranteed to be redeemable in the standard ways.
+If a peer is found to issue contradictory channel claims for the same epoch, they relinquish
+their right to any claim. For any third party this entails that if a peer's claim is
+included in the allocation table, the maximum they are entitled to redeem is limited to:
+(1) the sum in the claim if they signed a correct unique claim or
+(2) zero if they illegally signed multiple claims for the same epoch.
+Futhermore, the allocation table is exhaustive, therefore each
+peer signed their claim and no peer without a channel deposit are allowed to have a claim. 
+From this, third parties can also conclude that the sum of all claims in the
+allocation table is the maximum total deposit that can be consolidated as channel deposits.
+In order to secure full liability, it is stipulated in the validity criteria of allocation tables, that the sum of allocations do not exceed the global soft channel deposit.
+
+If the soft channel deposit allocation table is valid,
+we can with complete certainty know that the global deposit in A's contract
+ could cover all outstanding conditional notes handed to B even if all peers were to redeem all of their outstanding notes (e.g., by satisfying A's conditional bond).
+Practically this means then that, after receiving a valid allocation table for the epoch from A,
+B has no risk of insolvency when dealing with A's conditional notes.
+To insure a completely risk-free flow of conditional notes, the peers only  need to make sure that the total of their outstanding nodes do not exceed the sum of the current soft channel  deposit and the on-chain channel  deposit. 
+In fact nodes reallocate soft channel deposits to channels where they suspect that in the following epochs the total outstanding amount from conditional bonds and bounties will increase beyond what the channel deposit can cover and deallocate away from the channel if they are not expected to.
+Therefore in a way, hard channel deposits play the role of the payment  threshold in simple swap, whereas soft channel deposits serve are somewhat analogous to cheques or waivers for service-specific collateral against issued service requests. 
+
+In sum, using soft channel deposits enables the chequebook owner to allocate and reallocate funds
+as channel deposits in a fairly flexible way without blockchain transaction costs,
+yet provide $100\%$ solvency guarantees on all active conditional bonds and bounties to their peers.
