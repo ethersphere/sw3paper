@@ -31,12 +31,13 @@ In this simplest form, the chequebook has the same guarantee as real-world chequ
 
 
 \subsection{Using the chequebook one half of a payment channel}
-The prototypical payment channel consists of a smart contract set up by two parties A and B. The contract has some number of ether locked up in it that A and B have deposited and the contract keeps track of which portion of the locked up ether belongs to each party. The two parties A and B can exchange signed messages that would (if submitted to the channel contract) change the balance of ownership. Many such messages can be sent back and forth and function as payments between the two parties. Crucially, most of these messages do not need to be submitted to the contract at all. Only when one party wishes to withdraw ether from the channel does the last message indicating the current `state' of the channel - i.e. the balance between A and B - have to be submitted.
+The prototypical payment channel consists of a smart contract set up by two parties A and B. The contract has some number of ether locked up in it that A and B have deposited and the contract keeps track of which portion of the locked up ether belongs to each party. The two parties A and B can exchange signed messages that would (if submitted to the channel contract) change the balance of ownership. Many such messages can be sent back and forth and function as payments between the two parties. Crucially, most of these messages do not need to be submitted to the contract at all. Parties may submit a new state to the channel at any time in order to `save the current state on-chain', but only when one party wishes to actually withdraw ether from the channel does the last message indicating the current `state' of the channel - i.e. the balance between A and B - \emph{have} to be submitted.
 
 A chequebook contract implementing a debt waiving procedure like the one outlined in section \ref{subsubsec:waivingdebt} shares a lot of the same features. If user A has deployed such a chequebook and is using it to pay user B, then the cheques act very similarly to the payment messages above. Key differences to a full payment channel are
 
 \begin{enumerate}
     \item Initially payments can only flow in one direction (from A to B) and the balance can never go `below zero` i.e. in A's favour. This is analogous to a payment channel in which the initial deposit was made only by A.
+    \item Balances cannot be updated on-chain without a transfer.
     \item Payout is not guaranteed. 
 \end{enumerate}
 
@@ -48,9 +49,11 @@ The chequebook deployed by user A has a balance of ether that acts as collateral
 
 To add a payout guarantee, A would need to make only small modifications to the contract. Explicitly, in order to be able to issue guaranteed cheques to user B, the contract would contain some ether that is locked in the contract and acts as collateral for payments from A to B only. Any cheques held by B are thus guaranteed to be honoured up to this locked amount. Indeed, the only way A can withdraw the locked amount would involve a payout request by A followed by a grace period during which B is still able to submit any outstanding cheques.
 
-With this mechanism in place, the chequebook is now functionally equivalent to a full payment channel (albeit one in which the entire initial deposit was made by A).
+With this mechanism in place, the chequebook is now almost equivalent to a full payment channel (albeit one in which the entire initial deposit was made by A).
 
-Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is of course functionally equivalent to a full payment channel.
+Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is of functionally equivalent to a full payment channel; with the exception that states can not be `save on-chain' without an actual transfer. In a real payment channel the contract can update the relative balance - how much of the tied up collateral belongs to A and how much belongs to B - but in the chequebook implementation such a re-balancing necessarily involves a transfer from one chequebook contract to the other. Furthermore, advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network.
+
+Nevertheless, the simplicity of the chequebook implementation has some advantages of its own: the ability to gradually add features as they are needed and the ability to onboard new users at zero cost to them.
 
 
 \textbf{Suggestion: delete the rest of this subsection}
@@ -107,29 +110,21 @@ called a \gloss{payment channel}.
 \end{figure}
 \end{center}
 
-\subsection{Zero cost entry}
+\subsection{Zero barrier to entry}
 
-An additional advantage of this construct is that one can start providing service with zero ether.
-Since swap can also work only one way, if a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds (\gloss{insider}), first they just provide the service (and not use it)
-in order to produce a positive balance. In the simplest case insiders pay the newcomer on chain
-but there are more efficient ways of bootstrapping.
+A tremendous advantage of swap accounting in cinjunction with a chequebook contract %upgraded to function as such a simple payment channel 
+is that new users can begin to provide services and earn rewards without owning any ether initially.
+
+Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds and chequebooks (\gloss{insider}), the newcomer begins to provide the service (and not use it)
+in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of their own\footnote{There is a caveat here in that cashing cheques requires a gas expenditure (although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout}.
+
+Even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pays the newcomers on-chain. 
 
 If a newcomer connects to  an insider with an existing chequebook contract,
 the insider agrees to create a chequebook contract for the newcomer
-in return for consuming newcomers services.
- When insider's service debt reaches the amount needed by for contract creation,
- insider just sends a transaction to create the contract with newcomer as the owner.
-Once a node has its own chequebook contract, they are able
-to consume and potentially pay out more to their creditor.
+in return for consuming newcomers services. In this scenario, when an insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once a node has its own chequebook contract, they are able to consume and potentially pay out more to their creditor.
 
-In order to use the contract, however, it makes sense to have a balance on it.
-Since the owner has no ether, it makes sense
-to expect that the insider peers with funds will be the ones who deposit this starting balance.
-If peers agreed that they want to save on transaction costs, it is reasonable to create
-the contract with the required initial balance in one go. This would imply waiting out
-with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is
-the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) some
-extra service fee to incentivise insiders to lend.
+In order to use the contract, however, it makes sense to have a balance on it. Since the owner has no ether, it makes sense to expect that the insider peers with funds will be the ones who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) some extra service fee to incentivise insiders to lend.
 
 With the global deposit included, this cost of bootstrapping
 can be substantially higher than nodes' loss tolerance.
