@@ -36,8 +36,8 @@ The prototypical payment channel consists of a smart contract set up by two part
 A chequebook contract implementing a debt waiving procedure like the one outlined in section \ref{subsubsec:waivingdebt} shares a lot of the same features. If user A has deployed such a chequebook and is using it to pay user B, then the cheques act very similarly to the payment messages above. Key differences to a full payment channel are
 
 \begin{enumerate}
-    \item Initially payments can only flow in one direction (from A to B) and the balance can never go `below zero` i.e. in A's favour. This is analogous to a payment channel in which the initial deposit was made only by A.
-    \item Balances cannot be updated on-chain without a transfer.
+    \item Initially payments can only flow in one direction (from A to B) and the balance can never go `below zero` i.e. in A's favour. This is why we refer to this construct as `half' of a payment channel. It is analogous to a payment channel in which the initial deposit was made only by A.
+    \item Balances cannot be updated on-chain without a transfer. All collateral in the contract belongs to A; all that B can do is send in cheques to request a payout.
     \item Payout is not guaranteed. 
 \end{enumerate}
 
@@ -56,134 +56,123 @@ Note: If both A and B have such a chequebook contract, each having some collater
 Nevertheless, the simplicity of the chequebook implementation has some advantages of its own: the ability to gradually add features as they are needed and the ability to onboard new users at zero cost to them.
 
 
-\textbf{Suggestion: delete the rest of this subsection}
-
-
-If the variance is expected to be higher than the loss a peer can afford,
-risk of insolvency can be mitigated by assigning part of the balance to a beneficiary.
-This locked up sum, called \gloss{channel deposit} allows the owner a tilted balance and
-serves as assured collateral dedicated to a particular peer.
-This can be implemented by keeping peer-specific balances in the chequebook contract.
-This deposit is no longer pooled over multiple creditors
-and locking it can guarantee successful cashing of cheques up to the deposited amount.
-Withdrawal from the channel deposit is possible but involves a grace period during which
-the counterparty is invited to challenge the current balance by sending in the (last) cheque
-with the highest amount. After the grace period the owner can reduce the deposit to cover only
-its actual debt and may withdraw the remainder.
-In order to get the balance of account between peers, the contract needs access to the counterparty
-chequebook contract. For ease of explanation we assume that beneficiary is the
-chequebook contract itself. Channel deposits can then be implemented as a map with beneficiary contract
-address as key and the integer balance in wei as value.
-
-Two chequebook contracts that have a record for each other constitute what is
-called a \gloss{payment channel}.
-
-
-\begin{center}
-\begin{figure}
-\begin{center}
-\begin{tikzpicture}
-  \node (middle)[draw, rectangle, fill=green!60, minimum height=2em, minimum width=8em]{};
-  \node (midleft)[draw, rectangle, fill=orange!60, minimum height=2em, minimum width=4em, node distance=6em, left of=middle]{};
-\node (midright)[draw, rectangle, fill=orange!60, minimum height=2em, minimum width=4em, node distance=6em, right of=middle]{};
-\node (leftred) [draw, rectangle, fill=red!60, minimum height=2em, minimum width=2em, node distance=9em,left of=middle]{};
-\node (rightred)[draw, rectangle, fill=red!60, minimum height=2em, minimum width=2em, node distance=9em,right of=middle]{};
-\node (zero) [above of=middle,node distance=3.5em, text width=4em, align=center] {\small zero\\ balance};
-\node (zerod) [below of=middle] {};
-\draw [dashed](zero)--(zerod);
-\node (rtol) [node distance=8em,right of=zero,text width=4em, align=center] {\small payment\\threshold};
-\node (rtold) [node distance=8em,right of=zerod] {};
-\node (ltol) [node distance=8em,left of=zero,text width=4em, align=center] {\small payment\\threshold};
-\node (ltold) [node distance=8em,left of=zerod] {};
-\node (prtol) [node distance=4em,right of=zero,text width=4em, align=center] {\small channel\\deposit};
-\node (prtold) [node distance=4em,right of=zerod] {};
-\node (pltol) [node distance=4em,left of=zero,text width=4em, align=center] {\small channel\\deposit};
-\node (pltold) [node distance=4em,left of=zerod] {};
-\draw [dashed](rtol)--(rtold);
-\draw [dashed](ltol)--(ltold);
-\draw [dashed](prtol)--(prtold);
-\draw [dashed](pltol)--(pltold);
-\end{tikzpicture}
-\end{center}
-\caption{}
-\label{fig:paymentchannel}
-\end{figure}
-\end{center}
+% \textbf{Suggestion: delete the rest of this subsection}
+% 
+% 
+% If the variance is expected to be higher than the loss a peer can afford,
+% risk of insolvency can be mitigated by assigning part of the balance to a beneficiary.
+% This locked up sum, called \gloss{channel deposit} allows the owner a tilted balance and
+% serves as assured collateral dedicated to a particular peer.
+% This can be implemented by keeping peer-specific balances in the chequebook contract.
+% This deposit is no longer pooled over multiple creditors
+% and locking it can guarantee successful cashing of cheques up to the deposited amount.
+% Withdrawal from the channel deposit is possible but involves a grace period during which
+% the counterparty is invited to challenge the current balance by sending in the (last) cheque
+% with the highest amount. After the grace period the owner can reduce the deposit to cover only
+% its actual debt and may withdraw the remainder.
+% In order to get the balance of account between peers, the contract needs access to the counterparty
+% chequebook contract. For ease of explanation we assume that beneficiary is the
+% chequebook contract itself. Channel deposits can then be implemented as a map with beneficiary contract
+% address as key and the integer balance in wei as value.
+% 
+% Two chequebook contracts that have a record for each other constitute what is
+% called a \gloss{payment channel}.
+% 
+% 
+% \begin{center}
+% \begin{figure}
+% \begin{center}
+% \begin{tikzpicture}
+%   \node (middle)[draw, rectangle, fill=green!60, minimum height=2em, minimum width=8em]{};
+%   \node (midleft)[draw, rectangle, fill=orange!60, minimum height=2em, minimum width=4em, node distance=6em, left of=middle]{};
+% \node (midright)[draw, rectangle, fill=orange!60, minimum height=2em, minimum width=4em, node distance=6em, right of=middle]{};
+% \node (leftred) [draw, rectangle, fill=red!60, minimum height=2em, minimum width=2em, node distance=9em,left of=middle]{};
+% \node (rightred)[draw, rectangle, fill=red!60, minimum height=2em, minimum width=2em, node distance=9em,right of=middle]{};
+% \node (zero) [above of=middle,node distance=3.5em, text width=4em, align=center] {\small zero\\ balance};
+% \node (zerod) [below of=middle] {};
+% \draw [dashed](zero)--(zerod);
+% \node (rtol) [node distance=8em,right of=zero,text width=4em, align=center] {\small payment\\threshold};
+% \node (rtold) [node distance=8em,right of=zerod] {};
+% \node (ltol) [node distance=8em,left of=zero,text width=4em, align=center] {\small payment\\threshold};
+% \node (ltold) [node distance=8em,left of=zerod] {};
+% \node (prtol) [node distance=4em,right of=zero,text width=4em, align=center] {\small channel\\deposit};
+% \node (prtold) [node distance=4em,right of=zerod] {};
+% \node (pltol) [node distance=4em,left of=zero,text width=4em, align=center] {\small channel\\deposit};
+% \node (pltold) [node distance=4em,left of=zerod] {};
+% \draw [dashed](rtol)--(rtold);
+% \draw [dashed](ltol)--(ltold);
+% \draw [dashed](prtol)--(prtold);
+% \draw [dashed](pltol)--(pltold);
+% \end{tikzpicture}
+% \end{center}
+% \caption{}
+% \label{fig:paymentchannel}
+% \end{figure}
+% \end{center}
 
 \subsection{Zero barrier to entry}
 
-A tremendous advantage of swap accounting in cinjunction with a chequebook contract %upgraded to function as such a simple payment channel 
-is that new users can begin to provide services and earn rewards without owning any ether initially.
+A tremendous advantage of swap accounting is that new users can begin to provide services and earn rewards without owning any ether initially.
 
-Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds and chequebooks (\gloss{insider}), the newcomer begins to provide the service (and not use it)
-in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of their own\footnote{There is a caveat here in that cashing cheques requires a gas expenditure (although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout}.
+Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds (\gloss{insider}), the newcomer begins to provide the service (and not use it)
+in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of their own.
+In short, even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pays the newcomers on-chain. 
 
-Even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pays the newcomers on-chain. 
+If the insider has a chequebook and wishes to pay the newcomer with a cheque, this is also possible, but there is a caveat here in that cashing cheques requires a gas expenditure\footnote{although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout}. The newcomer will be able to earn cheques for services provided, but will not have the means to cash them. 
 
-If a newcomer connects to  an insider with an existing chequebook contract,
-the insider agrees to create a chequebook contract for the newcomer
-in return for consuming newcomers services. In this scenario, when an insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once a node has its own chequebook contract, they are able to consume and potentially pay out more to their creditor.
-
-In order to use the contract, however, it makes sense to have a balance on it. Since the owner has no ether, it makes sense to expect that the insider peers with funds will be the ones who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) some extra service fee to incentivise insiders to lend.
-
-With the global deposit included, this cost of bootstrapping
-can be substantially higher than nodes' loss tolerance.
-If the contract is deployed to the blockchain in advance, with ownership granted
-to the newcomer, the newcomer can just move with their new topped-up wallet
-to other peers leaving the lender node with loss.
-If it is to be deployed only after newcomer provided service totalling
-the cost, then the insider node will disappear after essentially leeching on
-the newcomer.
-
-Luckily, there is a safe protocol to tackle
-bootstrapping: the newcomer issues a cheque to the insider in advance with an amount
-corresponding to the bootstrapping cost. Insider creates a contract with herself as owner
-and a channel deposit also dedicated to herself in the amount
-on the cheque. At this point if the two peers never meet, the newcomer suffered no loss,
-the insider can just offer the contract to the next newcomer. Otherwise the service goes
-exactly the way as if the newcomer was an insider with a contract, and the insider held
-non-cashed cheques, i.e., as the insider consumes, each time it reaches the
-payment threshold, it issues waivers against the withheld cheques. This is equivalent
-to the insider setting up a subscription with newcomer, authorising withdrawal
-with the waivers (see figure \ref{fig:bootstrapping}).
-
-\begin{center}
-\begin{figure}
-\begin{center}
-\end{center}
-\caption{Bootstrapping or how to launch as a swap capable node consuming and providing a
-service  and earn money}
-\label{fig:bootstrapping}
-\end{figure}
-\end{center}
-
-
-As newcomer provides service and insider issues waivers, it is business as usual.
-Newcomer provides service to other peers and accepts payments sent to the
-contract. If the inpayments are insufficient to get the balance up
-to cover the bootstrapping cost, the entire contract is still owned by the insider
-who can reuse it with another peer with previous inpayments counting as profit.
-In this case neither the cheque nor the waivers are valid, therefore all the service insider
-may have received was free.
-
-If the balance goes above the cost of bootstrapping, the insider can cash it with
-the original cheque which will automatically change the owner to newcomer.
-The cheque works exactly as normal, i.e., when cashed, it is stored in escrow
-while the contract receives waivers.
-Waivers can be used to first cover the difference between channel deposit and balance, and above that
-count to reduce the outpayment to insider. In normal operation, once waivers goes over
-the cost of bootstrapping, insider issues ???
-
-This system is complete if newcomers have a way to send waivers to the contract.
-Since newcomers have zero balance, they cannot bear the transaction   cost and need others to send it for them. 
-Waivers and cheques can be signed by their beneficiary. These variants are also accepted by the chequebook
-and instruct the contract to pay an amount to the transaction sender covering the transaction cost plus a small service fee.  This way the prospect of the bounty serves as an incentive to
-third party insiders to transact on behalf of newcomers.
-The waiver or cheque triggers outpayment from the chequebook global  balance to the owner.
-This is how to earn ether with a service starting from nothing in the most efficient way.
-Signed notes are not only useful for newcomers; anyone without a blockchain connection
-will be able to interact and provide services without losing the security of the blockchain.
-
-To summarise, by serving before consuming, participants can
-bootstrap their way into swap without the need for funds.
-Hence swap is justified as (\emph{setting up a wallet as payment}).
+% This gas-cost bootstrapping problem is fundamental and cannot be circumvented without a direct on-chain payment. However it is surprising just how far we can get without it. It is possible for example to on-board newcomers to the point at which they have their own chequebook contract and are able to issue cheques as payments to third parties. That scheme would work as follows:
+% 
+% A newcomer connects to  an insider with an existing chequebook contract. The insider consumes the newcomers services and instead of issuing a cheque, the insider agrees to create a chequebook contract for the newcomer. In other words, when the insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once the newcomer has her own chequebook contract, she is able to consume services and issue cheques to pay for them.
+% 
+% In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) some extra service fee to incentivise insiders to lend.
+% 
+% With the global deposit included, this cost of bootstrapping can be substantially higher than the newcomers loss tolerance. If the newcomers chequebook is to be deployed only after newcomer provided service totalling the cost, then the insider node could disappear after essentially leeching on the newcomer. On the other hand, if it is deployed to the blockchain in advance, then it is the newcomer who can just disappera and move with their new topped-up wallet to other peers leaving the lender node with a loss. 
+% 
+% Luckily, there is a safe protocol to tackle bootstrapping: the newcomer issues a cheque to the insider in advance with an amount corresponding to the bootstrapping cost. The insider creates a chequebook contract with herself as owner and also includes locked collateral in the amount of the cheque, with herself set as the beneficiary. [At this point if the two peers disconnect, the newcomer suffered no loss, and the insider has a second chequebook contract that she can just offer to the next newcomer]. 
+% 
+% 
+% The service goes exactly the way as if the newcomer was an insider with a contract, and the insider held a non-cashed cheque, i.e., as the insider consumes, each time it reaches the payment threshold, it issues a debt waiver - a new cheque with a lower total amount exactly as described in section \ref{subsubsec:waivingdebt}. 
+% % 
+% %
+% % This is equivalent to the insider setting up a subscription with newcomer, authorising withdrawal with the waivers (see figure \ref{fig:bootstrapping}).
+% % 
+% % \begin{center}
+% % \begin{figure}
+% % \begin{center}
+% % \end{center}
+% % \caption{Bootstrapping or how to launch as a swap capable node consuming and providing a
+% % service  and earn money}
+% % \label{fig:bootstrapping}
+% % \end{figure}
+% % % \end{center}
+% % 
+% % 
+% As newcomer provides service and insider consumes, it is business as usual, each new cheque reducing the cumulative total. Once the cumulative total reaches zero, the chequebook .... this all is a very convoluted system that doesnt help us at all because in the end we still have a gas cost issue.
+% % Newcomer provides service to other peers and accepts payments sent to the
+% % contract. If the inpayments are insufficient to get the balance up
+% % to cover the bootstrapping cost, the entire contract is still owned by the insider
+% % who can reuse it with another peer with previous inpayments counting as profit.
+% % In this case neither the cheque nor the waivers are valid, therefore all the service insider
+% % may have received was free.
+% % 
+% If the balance goes above the cost of bootstrapping, the insider can cash it with
+% the original cheque which will automatically change the owner to newcomer.
+% The cheque works exactly as normal, i.e., when cashed, it is stored in escrow
+% while the contract receives waivers.
+% Waivers can be used to first cover the difference between channel deposit and balance, and above that
+% count to reduce the outpayment to insider. In normal operation, once waivers goes over
+% the cost of bootstrapping, insider issues ???
+% 
+% This system is complete if newcomers have a way to send waivers to the contract.
+% Since newcomers have zero balance, they cannot bear the transaction   cost and need others to send it for them. 
+% Waivers and cheques can be signed by their beneficiary. These variants are also accepted by the chequebook
+% and instruct the contract to pay an amount to the transaction sender covering the transaction cost plus a small service fee.  This way the prospect of the bounty serves as an incentive to
+% third party insiders to transact on behalf of newcomers.
+% The waiver or cheque triggers outpayment from the chequebook global  balance to the owner.
+% This is how to earn ether with a service starting from nothing in the most efficient way.
+% Signed notes are not only useful for newcomers; anyone without a blockchain connection
+% will be able to interact and provide services without losing the security of the blockchain.
+% 
+% To summarise, by serving before consuming, participants can
+% bootstrap their way into swap without the need for funds.
+% Hence swap is justified as (\emph{setting up a wallet as payment}).

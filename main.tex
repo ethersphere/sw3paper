@@ -31,6 +31,7 @@
 \begin{abstract}
 \end{abstract}
 
+\setcounter{tocdepth}{2}
 \tableofcontents
 
 \input{introduction.tex}
@@ -40,11 +41,7 @@
 
 \section{Escrow conditions on future payments}
 
-\gloss{Promissory notes} represent redeemable promises of payment potentially maturing in the future.
-We define the general notion of a note as a promise that entitles a beneficiary to future payment
-under a condition. Since this effectively puts the money in an escrow, the condition can
-also be referred to as an \gloss{escrow condition}.
-A promissory note can contain the following optional fields:
+\gloss{Promissory notes} represent redeemable promises of payment potentially maturing in the future. We define the general notion of a note as a promise that entitles a beneficiary to future payment under a condition. Since this effectively puts the money in an escrow, the condition can also be referred to as an \gloss{escrow condition}. A promissory note can contain the following optional fields:
 
   \begin{itemize}
     \item swap cycle index
@@ -56,59 +53,23 @@ A promissory note can contain the following optional fields:
     \item remark
   \end{itemize}
 
-In the simplest case no escrow condition or maturation date is given: such a note
-represents a simple cheque as discussed above.
-The maturation date (blockheight or timestamp) can be specified to indicate the earliest
-possible occasion a note can be redeemed (valid from) as well as a deadline when the promise
-expires unless its escrow condition is satisfied (valid until).
+In the simplest case no escrow condition or maturation date is given: such a note represents a simple cheque as discussed above. The maturation date (blockheight or timestamp) can be specified to indicate the earliest
+possible occasion a note can be redeemed (valid from) as well as a deadline when the promise expires unless its escrow condition is satisfied (valid until). 
 
 \subsection{Recurring payments}
 
-The cheque represents an adhoc promise to redeem an amount.
-The transfer of funds is sanctioned by a cheque issued for each occasion.
-There is, however, services where recurring payments are predictable and therefore
-the installments can be sanctioned in advance. The primary usecase is subscription
-services.
-This could be implemented by storing a whitelist of contract addresses that are allowed
-to withdraw from the chequebook balance.
-For simplicity, however, we choose to represent this analogously to cashing a cheque.
-Authorising a recurring payment to a contract is done by signing a blank cheque (a cheque with
-an unspecified amount) against the beneficiary possibly with a valid until date.
-Such beneficiaries are smart contracts and therefore no defense against
-false amount is needed.
-Receiving transfer request transactions is independent of the swap state of cumulative amount
-and simply withdraws the amount from the global balance or the channel deposit of the owner.
+The cheque represents an adhoc promise to redeem an amount. The transfer of funds is sanctioned by a cheque issued for each occasion. There is, however, services where recurring payments are predictable and therefore the installments can be sanctioned in advance. The primary usecase is subscription services. This could be implemented by storing a whitelist of contract addresses that are allowed to withdraw from the chequebook balance. For simplicity, however, we choose to represent this analogously to cashing a cheque. Authorising a recurring payment to a contract is done by signing a blank cheque (a cheque with an unspecified amount) against the beneficiary possibly with a valid until date. Such beneficiaries are smart contracts and therefore no defense against false amount is needed. Receiving transfer request transactions is independent of the swap state of cumulative amount and simply withdraws the amount from the global balance or the channel deposit of the owner.
 
 \subsection{Bonds}
 
-A note with an amount and beneficiary and a future valid from data is effectively a bond.
-The amount factors in all outstanding payment obligations the beneficiary is entitled to
-once the bond matures including interest. When such a note is not collateralised at the time of issuing,
-accepting the bond is equivalent to granting a loan on the grounds of the credit history of the account.
-
+A note with an amount and beneficiary and a future valid from data is effectively a bond. The amount factors in all outstanding payment obligations the beneficiary is entitled to once the bond matures including interest. When such a note is not collateralised at the time of issuing, accepting the bond is equivalent to granting a loan on the grounds of the credit history of the account. 
 \subsection{Escrow conditions and escrow witnesses}
 
-If an escrow address is specified in the note, the referenced contract can be used to verify the condition
-of redemption. When the escrow condition is verified, the owner, the beneficiary address, and
-the note id (the hash of the signed note) are passed as arguments to the {\gloss{testimonyFor}} method
-of the escrow contract. By implementing this method the contract conforms to the \gloss{witness} contract
- interface
-(section \ref{sec:courtroom}). Given the witness contract, the escrow condition is implicitly defined
-as whatever state makes the escrow witness give a positive testimony.
+If an escrow address is specified in the note, the referenced contract can be used to verify the condition of redemption. When the escrow condition is verified, the owner, the beneficiary address, and the note id (the hash of the signed note) are passed as arguments to the {\gloss{testimonyFor}} method of the escrow contract. By implementing this method the contract conforms to the \gloss{witness} contract  interface (section \ref{sec:courtroom}). Given the witness contract, the escrow condition is implicitly defined as whatever state makes the escrow witness give a positive testimony. 
 
-A note with an escrow field specified is called a \gloss{conditional bond} and
-can represent a \gloss{service contract} with the escrow condition describing successful delivery.
-In a real-life scenario, upon verification of an instance of service provision or purchase of a good,
-the escrow acknowledges the delivery before releasing the funds.
-This is implemented by the chequebook calling the escrow witness contract
-to give a testimony. In case the condition is fully verifiable algorithmically in the VM,
-the entire transaction remains within the closed system, there is no real-world liability and the transfer
-is enforceable.
+A note with an escrow field specified is called a \gloss{conditional bond} and can represent a \gloss{service contract} with the escrow condition describing successful delivery. In a real-life scenario, upon verification of an instance of service provision or purchase of a good, the escrow acknowledges the delivery before releasing the funds. This is implemented by the chequebook calling the escrow witness contract to give a testimony. In case the condition is fully verifiable algorithmically in the VM, the entire transaction remains within the closed system, there is no real-world liability and the transfer is enforceable.
 
-If no beneficiary is specified, a conditional note is essentially a \gloss{bounty}.
-A bounty is meant to be published or broadcast to a set of known service providers.
-Bounties will play a crucial role in certain types of service networks, discussed in section \ref{sec:wasp}.
-Figure \ref{fig:taxonomy} summarises the various types of promissory notes.
+If no beneficiary is specified, a conditional note is essentially a \gloss{bounty}. A bounty is meant to be published or broadcast to a set of known service providers. Bounties will play a crucial role in certain types of service networks, discussed in section \ref{sec:wasp}. Figure \ref{fig:taxonomy} summarises the various types of promissory notes.
 
 
 \newcommand{\tick}{\checkmark}
