@@ -37,7 +37,7 @@ A chequebook contract implementing a debt waiving procedure like the one outline
 
 \begin{enumerate}
     \item Initially payments can only flow in one direction (from A to B) and the balance can never go `below zero` i.e. in A's favour. This is why we refer to this construct as `half' of a payment channel. It is analogous to a payment channel in which the initial deposit was made only by A.
-    \item Balances cannot be updated on-chain without a transfer. All collateral in the contract belongs to A; all that B can do is send in cheques to request a payout.
+    \item Balances cannot be updated on-chain without a transfer. All collateral in the contract belongs to A; all that B can do is send in cheques to request a payout.% and then subsequently send the received funds to her own chequebook contract.
     \item Payout is not guaranteed. 
 \end{enumerate}
 
@@ -51,7 +51,7 @@ To add a payout guarantee, A would need to make only small modifications to the 
 
 With this mechanism in place, the chequebook is now almost equivalent to a full payment channel (albeit one in which the entire initial deposit was made by A).
 
-Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is of functionally equivalent to a full payment channel; with the exception that states can not be `save on-chain' without an actual transfer. In a real payment channel the contract can update the relative balance - how much of the tied up collateral belongs to A and how much belongs to B - but in the chequebook implementation such a re-balancing necessarily involves a transfer from one chequebook contract to the other. Furthermore, advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network.
+Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is of functionally equivalent to a full payment channel; with the exception that states can not be `save on-chain' without an actual transfer. In a real payment channel the contract can update the relative balance - how much of the tied up collateral belongs to A and how much belongs to B - but in the chequebook implementation such a re-balancing necessarily involves a transfer from one chequebook contract to the other\footnote{To be clear, the equivalent action of updating the channel state on-chain is possible, but more expensive, possibly substantially so. It would involve B cashing A's cheques then sending those funds to her own chequebook contract as collateral and then increasing the funds locked up with A as the beneficiary by that amount.}. Furthermore, advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network.
 
 Nevertheless, the chequebook implementation has the advantage that it can start out simple with features can being added gradually as they are needed.
 
@@ -126,7 +126,7 @@ A newcomer connects to  an insider with an existing chequebook contract. The ins
  
 In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) possibly some extra service fee to incentivise insiders to provide this kind of service.
 % 
-% With the global deposit included, this cost of bootstrapping can be substantially higher than the newcomers loss tolerance. If the newcomers chequebook is to be deployed only after newcomer provided service totalling the cost, then the insider node could disappear after essentially leeching on the newcomer. On the other hand, if it is deployed to the blockchain in advance, then it is the newcomer who can just disappera and move with their new topped-up wallet to other peers leaving the lender node with a loss. 
+% With the global deposit included, this cost of bootstrapping can be substantially higher than the newcomers loss tolerance. If the newcomers chequebook is to be deployed only after newcomer provided service totalling the cost, then the insider node could disappear after essentially leeching on the newcomer. On the other hand, if it is deployed to the blockchain in advance, then it is the newcomer who can just disapper and move with their new topped-up wallet to other peers leaving the lender node with a loss. 
 % 
 % Luckily, there is a safe protocol to tackle bootstrapping: the newcomer issues a cheque to the insider in advance with an amount corresponding to the bootstrapping cost. The insider creates a chequebook contract with herself as owner and also includes locked collateral in the amount of the cheque, with herself set as the beneficiary. [At this point if the two peers disconnect, the newcomer suffered no loss, and the insider has a second chequebook contract that she can just offer to the next newcomer]. 
 % 
@@ -147,7 +147,13 @@ In order to be useful however, the deployed chequebook must also have some posit
 % % % \end{center}
 % % 
 % % 
-% As newcomer provides service and insider consumes, it is business as usual, each new cheque reducing the cumulative total. Once the cumulative total reaches zero, the chequebook .... this all is a very convoluted system that doesnt help us at all because in the end we still have a gas cost issue.
+% As newcomer provides service and insider consumes, it is business as usual, each new cheque reducing the cumulative total. Once the cumulative total reaches zero, the chequebook ...
+
+
+% %.... this all is a very convoluted system that doesnt help us at all because in the end we still have a gas cost issue.
+
+
+
 % % Newcomer provides service to other peers and accepts payments sent to the
 % % contract. If the inpayments are insufficient to get the balance up
 % % to cover the bootstrapping cost, the entire contract is still owned by the insider
