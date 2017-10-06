@@ -29,9 +29,8 @@ crucial for the design of scalable decentralised service economies.
 
 We will describe the trial process for dispute
 resolution that first evaluates the evidence against the accused provider.
-The verification is the same as the one used in the process of sanctioning outpayments,
-but once a provider is proven guilty by the court on the grounds of
-conditions specified in the service contract, various punitive measures will be
+The verification is the same as the one used in the process of sanctioning outpayments when the escrow condition is evaluated after service delivery.
+However, if a provider is proven guilty by the court on the grounds of not complying with the rules specified in the service contract, various punitive measures will be
 automatically enforced. In most cases, this comprises losing some deposit that
 provider previously locked up as collateral to back their promise.%
 %
@@ -45,8 +44,8 @@ By registering on a service contract and putting up a deposit if required, provi
 This deposit is locked up and used later as compensatory insurance transferred to the
 customer, redistributed or burnt.
 
-\subsection{Challening a service contract}
-label{sec:swindle}
+\subsection{Challenging a service contract}
+\label{sec:swindle}
 
 If a service provider is suspected of non-compliance, they can be challenged
 by opening a case with the swear contract analogous to filing a case and have it 
@@ -66,12 +65,11 @@ evaluate evidence submitted to them in relation to the case
 and give testimony if asked by the judge.
 The request--response process between the judge and the witnesses can
 thus be standardized
-even though they each may require different data to be submitted to them as evidence.
+even though each witness may require different data to be submitted to them as evidence.
 
 To implement such an abstract dispute resolution system
-the trial is described by a finite state automaton, the states of which correspond
-to stages of litigation and
-the transitions are labeled by various outcomes of evaluating evidence submitted
+the trial is described by a \emph{finite state automaton} the states of which correspond to stages of litigation. 
+The transitions are labelled with various outcomes of evaluating evidence submitted
 to the respective expert witness associated with the stage. A witness
 is a smart contract that implements the $\mathit{testimonyFor}$ function which takes
 as arguments the provider address, the plaintiff address, and the note id (the hash of the signed note)

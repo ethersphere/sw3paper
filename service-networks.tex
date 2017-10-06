@@ -33,11 +33,11 @@ swap transaction. As a result non-participating users can just \emph{request and
 
 Let's assume that nodes A,B,C,D are participant peers of a service network such that
 A-B, B-C and C-D are direct connections with a swap channel.
-Assume further that A intends to do some ad-hoc one-off business with D. To this end
+Assume further that A intends to do some ad-hoc one-off business with D. To this end,
  A issues a conditional bond specifying an escrow
 condition that some data be obtained from D constituting the proof of delivery of the task.
 
-A then sends the conditional bond to B as beneficiary, B receives the conditional bond
+When A sends the conditional bond to B as beneficiary, B receives the conditional bond
 and issues the same bond
 only this time with C as beneficiary. C is directly connected to D, so
 it just relays the same to D who issues a receipt (or takeover proof).
@@ -46,16 +46,8 @@ the receipt, it is incentivised to pass it back to B as an invoice to prompt
 settlement. The same is true for B and any number of intermediate relaying nodes
 (see figure \ref{fig:swapchannelnetwork}).
 
-\begin{center}
-\begin{figure}
-\begin{center}
-\end{center}
-\caption{Swap channel network: peer to peer network of nodes with semipermanent TCP connections organised in
-a kademlia topology. Given nodes have an associated identity owning a chequebook contract,
-each live connection defines a swap channel}
-\label{fig:swapchannelnetwork}
-\end{figure}
-\end{center}
+\input{svcnets-overlay-diagram.tex}
+\input{svcnets-sequence-diagram.tex}
 
 In general, we define an \emph{indirect transaction} as a chain of swaps between directly connected
 peers. The success of a such indirect transactions between two nodes is dependent on whether and
@@ -149,7 +141,7 @@ If hops use provable data streams, the incentives can make sure that the request
 For continuous services such as chunk storage, this means that as nodes leave
 and join the network, the node responsible for a task can change over time.
 With data exchange proofs however, we can enforce that nodes synchronise historical
-task requests and therefore the allocation can be taken for granted, i.e., the network
+task requests and therefore the allocation can be taken for granted. In other words, the network
 can perform dynamic load-balancing of previously submitted future tasks even though
 the network is changing.
 

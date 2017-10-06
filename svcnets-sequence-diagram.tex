@@ -1,0 +1,113 @@
+% Agents
+\def\A{A}
+\def\B{B}
+\def\C{C}
+\def\D{D}
+
+% Message Flows
+\def\BondB{Conditional Bond A->B}
+\def\BondC{Conditional Bond B->C}
+\def\BondD{Conditional Bond C->D}
+\def\ReceiptD{Receipt D->C}
+\def\ReceiptC{Receipt C->B}
+\def\ReceiptB{Receipt B->A}
+
+% Legend 
+%\def\LegendOnChain{On-chain}
+%\def\LegendOffChain{Off-chain}
+
+% Diagram
+\begin{figure}
+\centering
+   
+
+% Diagram
+\begin{tikzpicture}[every node/.style={font=\normalsize,
+  minimum height=.75cm,minimum width=1cm},]
+
+% Matrix
+\node [matrix, very thin,column sep=1.0cm,row sep=0.2cm] (matrix) at (0,0) {
+  & \node(0,0) (\A) {};   &                         & \node(0,0) (\B) {};   &                         & \node(0,0) (\C) {};     &                         & \node(0,0) (\D) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 1) {}; & \node(0,0) (\BondB) {}; & \node(0,0) (\B 1) {}; &                         & \node(0,0) (\C 1) {};   &                         & \node(0,0) (\D 1) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 2) {}; &                         & \node(0,0) (\B 2) {}; & \node(0,0) (\BondC) {}; & \node(0,0) (\C 2) {};   &                         & \node(0,0) (\D 2) {}; \\ 
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 3) {}; &                         & \node(0,0) (\B 3) {}; &                         & \node(0,0) (\C 3) {};   &  \node(0,0) (\BondD) {};& \node(0,0) (\D 3) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 4) {}; &                         & \node(0,0) (\B 4) {}; &                         & \node(0,0) (\C 4) {};   &  \node(0,0) (\ReceiptD) {}; & \node(0,0) (\D 4) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 5) {}; &                         & \node(0,0) (\B 5) {}; & \node(0,0) (\ReceiptC) {};& \node(0,0) (\C 5) {}; &                          & \node(0,0) (\D 5) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 6) {}; & \node(0,0) (\ReceiptB) {};& \node(0,0) (\B 6) {}; &                         & \node(0,0) (\C 6) {};&                          & \node(0,0) (\D 6) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+  & \node(0,0) (\A 7) {}; &                         & \node(0,0) (\B 7) {};  &                          & \node(0,0) (\C 7) {};&                          & \node(0,0) (\D 7) {}; \\
+  & & & & & & & \\
+  & & & & & & & \\
+%  & \node(0,0) (\A 7) {}; & \node(0,0) (\LegendOnChain) {};  & & & & & \\
+%  & \node(0,0) (\A 8) {}; & \node(0,0) (\LegendOffChain) {}; & & & & & \\
+};
+
+% Agents labels
+\fill 
+	(\A) node[draw,fill=white] {\A}
+	(\B) node[draw,fill=white] {\B}
+	(\C) node[draw,fill=white] {\C}
+	(\D) node[draw,fill=white] {\D};
+
+\draw [dashed] 
+  (\A) -- (\A 7)
+  (\B) -- (\B 7)
+  (\C) -- (\C 7)
+  (\D) -- (\D 7);
+
+% Horizontal flows (Monetary interactions)
+\draw [-{Latex[length=2mm,width=3mm]}] (\A 1) -- (\B 1);
+\draw [-{Latex[length=2mm,width=3mm]}] (\B 2) -- (\C 2);
+\draw [-{Latex[length=2mm,width=3mm]}] (\C 3) -- (\D 3);
+\draw [-{Latex[length=2mm,width=3mm]}] (\D 4) -- (\C 4);
+\draw [-{Latex[length=2mm,width=3mm]}] (\C 5) -- (\B 5);
+\draw [-{Latex[length=2mm,width=3mm]}] (\B 6) -- (\A 6);
+
+% Flows Labels 
+\fill
+  (\BondB) 
+    node[above] {\BondB}
+  (\BondC) 
+    node[above] {\BondC}
+  (\BondD) 
+    node[above] {\BondD}
+  (\ReceiptD) 
+    node[above] {\ReceiptD}
+  (\ReceiptC) 
+    node[above] {\ReceiptC}
+  (\ReceiptB) 
+    node[above] {\ReceiptB};
+
+% Interaction points 
+\draw 
+  (\A 1) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\B 1) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\B 2) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\C 2) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\C 3) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\D 3) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\D 4) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\C 4) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\C 5) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\B 5) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\B 6) node[minimum size=0.2cm, draw,circle,fill=red!20] {}
+  (\A 6) node[minimum size=0.2cm, draw,circle,fill=red!20] {};
+
+\end{tikzpicture}
+\caption{Sequence of conditional bond exchange and receipt forwarding in a service network}
+\label{fig:svcnets-sequence-diagram}
+\end{figure}

@@ -8,7 +8,7 @@ One strategy to mitigate transaction costs is to defer payments and process them
 
 A very simple smart contract that allows the beneficiary to choose when payments are to be processed, was introduced in \cite{ethersphere2016sw3}.
 This \gloss{chequebook} contract is a wallet that can process cheques issued by its owner. The cheques are
-analgous to those in the real-world: the issuer signs a cheque specifying a beneficiary, a date and an amount,
+analogous to those in the real-world: the issuer signs a cheque specifying a beneficiary, a date and an amount,
 gives it to the recipient as a token of promise to pay at a later date. The smart contract plays the
 role of the bank. When the recipient wishes to get paid, they ``cash the cheque'' by submitting it to the smart contract. The contract, after validating the signature, date and the amount specified on the cheque, transfers the amount to the beneficiary's account (see figure \ref{fig:swap-chequebook}).
 %Analogously to the person taking the cheque to the bank to cash it, anyone can send the digital cheque as part of the data in a transaction to the owner's chequebook account and thus trigger the transfer.
@@ -29,8 +29,9 @@ In this simplest form, the chequebook has the same guarantee as real-world chequ
 
 \input{swap-waivers.tex}
 
+\subsection{Channel deposits}
 
-\subsection{Using the chequebook one half of a payment channel}
+\subsubsection{Using the chequebook as one half of a payment channel}
 The prototypical payment channel consists of a smart contract set up by two parties A and B. The contract has some number of ether locked up in it that A and B have deposited and the contract keeps track of which portion of the locked up ether belongs to each party. The two parties A and B can exchange signed messages that would (if submitted to the channel contract) change the balance of ownership. Many such messages can be sent back and forth and function as payments between the two parties. Crucially, most of these messages do not need to be submitted to the contract at all. Parties may submit a new state to the channel at any time in order to `save the current state on-chain', but only when one party wishes to actually withdraw ether from the channel does the last message indicating the current `state' of the channel - i.e. the balance between A and B - \emph{have} to be submitted.
 
 A chequebook contract implementing a debt waiving procedure like the one outlined in section \ref{subsubsec:waivingdebt} shares a lot of the same features. If user A has deployed such a chequebook and is using it to pay user B, then the cheques act very similarly to the payment messages above. Key differences to a full payment channel are
@@ -47,15 +48,126 @@ The fact that payout is not guaranteed is a result of the fact that cheques can 
 
 The chequebook deployed by user A has a balance of ether that acts as collateral for all outstanding cheques A has issued. As such, any user B holding a cheque from A has no guarantee that payout will be possible at any particular time in the future. 
 
-To add a payout guarantee, A would need to make only small modifications to the contract. Explicitly, in order to be able to issue guaranteed cheques to user B, the contract would contain some ether that is locked in the contract and acts as collateral for payments from A to B only. Any cheques held by B are thus guaranteed to be honoured up to this locked amount. Indeed, the only way A can withdraw the locked amount would involve a payout request by A followed by a grace period during which B is still able to submit any outstanding cheques.
+To add a payout guarantee, we need to make only small modifications to the contract. Explicitly, in order to be able to issue guaranteed cheques to user B, the contract would contain some ether that is locked in the contract and acts as collateral for payments from A to B only. Any cheques held by B are thus guaranteed to be honoured up to this locked amount. Indeed, the only way A can withdraw the locked amount would involve a payout request by A followed by a grace period during which B is still able to submit any outstanding cheques.
 
 With this mechanism in place, the chequebook is now almost equivalent to a full payment channel (albeit one in which the entire initial deposit was made by A).
 
-Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is of functionally equivalent to a full payment channel; with the exception that states can not be `save on-chain' without an actual transfer. In a real payment channel the contract can update the relative balance - how much of the tied up collateral belongs to A and how much belongs to B - but in the chequebook implementation such a re-balancing necessarily involves a transfer from one chequebook contract to the other\footnote{To be clear, the equivalent action of updating the channel state on-chain is possible, but more expensive, possibly substantially so. It would involve B cashing A's cheques then sending those funds to her own chequebook contract as collateral and then increasing the funds locked up with A as the beneficiary by that amount.}. Furthermore, advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network.
+Note: If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is functionally equivalent to a full payment channel; with the exception that states can not be `save on-chain' without an actual transfer. In a real payment channel the contract can update the relative balance - how much of the tied up collateral belongs to A and how much belongs to B - but in the chequebook implementation such a re-balancing necessarily involves a transfer from one chequebook contract to the other.%
+%
+\footnote{To be clear, the equivalent action of updating the channel state on-chain is possible, but more expensive, possibly substantially so. It would involve B cashing A's cheques then sending those funds to her own chequebook contract as collateral and then increasing the funds locked up with A as the beneficiary by that amount.} Furthermore, advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network.
 
 Nevertheless, the chequebook implementation has the advantage that it can start out simple with features can being added gradually as they are needed.
 
+\section{Channel deposits}
 
+First we introduce the notion of hard channel deposit, a part of the global deposit that is always dedicated to a channel. The sum of all channel deposits is the total channel deposits. The global balance must not be less than the total of channel deposits. Channel deposit allocations can be controlled via transactions. Whenever a part of A's balance is assigned to B, the balance is checked and the transaction fails if total  channel deposits would exceed the global balance.
+Conversely when the owner attempts to withdraw from the swap contract, the balance is not allowed to go below the total of channel deposits. For ease of explanation assume that the contract keeps track of the current sum of channel deposits, and saves it as \gloss{global deposit}. The difference between the global balance and global deposit is the liquid balance. The total of channel deposits is never higher than the global deposit, the difference is \gloss{global liquid deposit}.
+
+The idea is to distribute this liquid deposit among the swap channels in a cost-effective, flexible yet secure way.%
+%
+\footnote{The global deposit can be implemented by the channel deposit assigned to the owner. Two step delayed withdrawal would fall out from this construct.}
+%
+At any point in time insolvency can be triggered if $\Sum^{i\in P}u_i < b$. Solvency is guaranteed to a peer B if 
+$u_B <= d_B$. If $u_B > d_B$, part of A's liability is unsecured, $l_B = u_B - d_B$. If solvency is not guaranteed, it is reasonable for peer B to cash their cheque. If all peers do this, there is a bank run. If the sum of overruns is not greater than the liquid balance ($\Sum{i\in P}l_i <= l$, the bank run ends well, otherwise the creditors compete for 
+liquidating their entitlement before the liquid balance runs dry. 
+Insolvency is known if there is a peer whose unsecured uncashed balance is higher than the global liquid balance, i.e., $l_B > l$.
+Solvency is not guaranteed if $u_B > d_B$, and as $u_B$ increases, so does the potential loss in case of insolvency. Is it possible to secure allocations of the liquid deposit so that it tracks the liabilities? Well with an 
+
+\subsection{Soft channel deposits}
+
+In the following we describe a construct which gives 100$\%$ guarantee of solvency on the outstanding liabilities of peer A without explicitly assigning deposits to channels on chain.%
+%
+\footnote{In the on-chain case channel deposits are explicitly stored in the contract, therefore overspending
+(using the amount to collateralise multiple creditors) is impossible.}
+
+Turning it around, we can assume that 
+Let us assume that A and B both agree 
+
+With each epoch, B signs the note and sends it to A.
+Peer A can verify if the soft claim is correct and terminate dealings if not. In such a case soft claim of
+the last epoch is taken, whereby A cancels its liability to the conditional notes issued since
+the last epoch.
+B is incentivised to send the correct soft claim if they want business with A fulfilling their
+conditional notes.
+
+After A receives soft channel deposit claims from all its active peers for the epoch, the claims are
+collected in a list (ordered according to the peer index of the beneficiary in A's swap contract).
+A signs the swarm hash of the (concatenated) list and sends it alongside the list
+in a construct called a \gloss{soft channel deposit allocation table} to each peer.
+Upon receiving the soft channel deposit allocation table, B verifies that
+(1) the total sum of channel deposits allocated is no greater than the global deposit and
+(2) the amount dedicated to B is no less than the sum of all outstanding active
+conditional notes issued by A to B.
+(3) each active peer in A's swap contract has a corresponding claim for the current epoch and the signature is valid.
+This process in illustrated in figure \ref{fig:softchanneldeposit}
+
+
+\begin{center}
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+\end{tikzpicture}
+\end{center}
+\caption{Soft channel deposit}
+\label{fig:softchanneldeposit}
+\end{figure}
+\end{center}
+
+
+
+
+At any point in time, soft channel deposit claims can be consolidated to actual
+channel deposits.
+The soft channel deposit claim is sent in with the inclusion proof of the claim against the root hash of the
+current channel deposit allocation table as a transaction to the
+chequebook contract. Upon receiving and validating the claim (signature, resource and epoch verified),
+the contract simply reallocates the claimed amount from the global deposit to the channel.
+If each peer does this, the global deposit is reduced with the total of soft channel
+deposits.%
+%
+\footnote{To save all peers the trouble of sending inclusion proofs, when A initiates withdrawal from
+their global deposit, they need to submit current allocation table starting a grace period during which
+creditors are invited to challenge the allocation by presenting a contradicting claim.}
+
+Once the channel deposit (of A towards B) is secured on chain, all the outstanding conditional notes
+issued to B are guaranteed to be redeemable in the standard ways.
+If a peer is found to issue contradictory channel claims for the same epoch, they relinquish
+their right to any claim. For any third party this entails that if a peer's claim is
+included in the allocation table, the maximum they are entitled to redeem is limited to:
+(1) the sum in the claim if they signed a correct unique claim or
+(2) zero if they illegally signed multiple claims for the same epoch.
+Furthermore, if the allocation table is exhaustive, therefore each
+peer signed their claim and no peer without a channel deposit are allowed to have a claim. 
+From this, third parties can also conclude that the sum of all claims in the
+allocation table is the maximum total deposit that can be consolidated as channel deposits.
+In order to secure full liability, it is stipulated in the validity criteria of allocation tables, that the sum of allocations do not exceed the global deposit.
+
+If the soft channel deposit allocation table is valid,
+we can with complete certainty know that the global deposit in A's contract
+ could cover all outstanding conditional notes handed to B even if all peers were to redeem all of their outstanding notes (e.g., by satisfying A's conditional bond).
+Practically this means then that, after receiving a valid allocation table for the epoch from A,
+B has no risk of insolvency when dealing with A's conditional notes.
+
+To insure a completely risk-free flow of conditional bonds from A to B, receiving peer B of the bond only  need to make sure that the total of their active bonds from A do not exceed the sum of the current soft and hard (on-chain) channel  deposits in the channel (in B's entry in A's swap contract). In fact nodes reallocate soft channel deposits to channels where they suspect that in the following epochs the total outstanding amount from conditional bonds and bounties will increase beyond what the channel deposit can cover and deallocate away from the channel if they are not expected to. The following algorithm is approximating this.
+
+The difference between the swap balance (cumulative total paid out to B) and the cumulative total of issued (mature, non-conditional) notes represents the uncashed cheques, $u_B$. The total per-user deposit $d_B$ is the sum of hard and soft channel deposits for B. 
+
+
+Consider the liabilities when conditional notes enter the swap. 
+If A wants to send a conditional note $C_i$ to B, it takes the total of the amounts on outstanding  notes $t_B$ active in the next epoch. 
+If conditional notes are to be secured, B needs to consider conditional notes the same way as uncashed cheques. If the total uncashed balance is not greater than the total channel deposit (the sum of hard and soft channel deposits), the swap contract is guaranteed to be solvent even if all conditional notes get fulfilled and redeemable. If it is greater, there is unsecured liablity, defined as $l_B = t_B + u_B - d_B$. The peer is potentially insolvent if $\Sum_{i\in P}l_i > b$, assuming all conditional notes become fulfilled all peers cash out and no extra amount is deposited on the contract. 
+When considering sending a note, it is regarded as inconsiderate to go beyond this limit since it puts your peer in uncertainty, we can stipulate a strict etiquette that if $l_B > 0$ the peer will disconnect. 
+Since conditional notes are never mandatory, A can be expected to wait out with sending if it cannot afford raising the soft channel deposit. 
+Since conditional bonds therefore contribute to soft channel deposits which can be written off against each other conditional notes can be part of 
+
+
+
+
+Therefore in a way, hard channel deposits play the role of the payment  threshold in simple swap, whereas soft channel deposits serve are somewhat analogous to cheques or waivers for service-specific collateral against issued service requests. 
+
+In summary, using soft channel deposits enables the chequebook owner to allocate and reallocate funds
+as channel deposits in a fairly flexible way without blockchain transaction costs,
+yet provide $100\%$ solvency guarantees on all active conditional bonds and bounties to their peers.
 
 % \textbf{Suggestion: delete the rest of this subsection}
 % 
@@ -116,7 +228,7 @@ Nevertheless, the chequebook implementation has the advantage that it can start 
 A tremendous advantage of swap accounting is that new users can begin to provide services and earn rewards without owning any ether initially.
 
 Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds (\gloss{insider}), the newcomer begins to provide the service (and not use it) in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of her own.
-In short, even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pays the newcomers on-chain. 
+In short, even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pay the newcomers on-chain. 
 
 If the insider has a chequebook and wishes to pay the newcomer with a cheque, this is also possible, but there is a caveat here in that cashing cheques requires a gas expenditure\footnote{although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout.}. The newcomer will be able to earn cheques for services provided, but will not have the means to cash them. 
 
