@@ -1,17 +1,13 @@
 
 \section{Swap channels}
 
-One of the major issues with direct ``on-chain'' payments in a blockchain network, is that each transaction must be processed by each and every node participating in the network, resulting in high transaction costs.
+One of the major issues with direct ``on-chain'' payments in a blockchain network is that each transaction must be processed by each and every node participating in the network, resulting in high transaction costs.
 One strategy to mitigate transaction costs is to defer payments and process them in bulk. In exchange for reduced cost, the beneficiary must be willing to incur higher risk of settlement failure.
 
 \subsection{A simple chequebook}\label{subsec:simple-chequebook}
 
-A very simple smart contract that allows the beneficiary to choose when payments are to be processed, was introduced in \cite{ethersphere2016sw3}.
-This \gloss{chequebook} contract is a wallet that can process cheques issued by its owner. The cheques are
-analogous to those in the real-world: the issuer signs a cheque specifying a beneficiary, a date and an amount,
-gives it to the recipient as a token of promise to pay at a later date. The smart contract plays the
-role of the bank. When the recipient wishes to get paid, they ``cash the cheque'' by submitting it to the smart contract. The contract, after validating the signature, date and the amount specified on the cheque, transfers the amount to the beneficiary's account (see figure \ref{fig:swap-chequebook}).
-%Analogously to the person taking the cheque to the bank to cash it, anyone can send the digital cheque as part of the data in a transaction to the owner's chequebook account and thus trigger the transfer.
+A very simple smart contract that allows the beneficiary to choose when payments are to be processed was introduced in \cite{ethersphere2016sw3}.
+This \gloss{chequebook} contract is a wallet that can process cheques issued by its owner. The cheques are analogous to those in the real-world: the issuer signs a cheque specifying a beneficiary, a date and an amount, gives it to the recipient as a token of promise to pay at a later date. The smart contract plays the role of the bank. When the recipient wishes to get paid, they ``cash the cheque'' by submitting it to the smart contract. The contract, after validating the signature, date and the amount specified on the cheque, transfers the amount to the beneficiary's account (see figure \ref{fig:swap-chequebook}). Analogously to the person taking the cheque to the bank to cash it, anyone can send the digital cheque in a transaction to the owner's chequebook account and thus trigger the transfer. 
 
 \input{swap-diagram.tex}
 
@@ -168,48 +164,29 @@ We can assume that if C formerly part of a group presented with the alternative 
 
 A protocol called \gloss{mutable resource update notifications} offers a solution: 
 the pull notification version requires the resource owner to send a resource update chunk to a number of 
-deterministic but not predictable addresses. These are stored and served exactly as chunks. 
-When B and C are in their respective split, then both B and C check resource updates at the same time. An adversary A has a hard time making sure that each of the two versions is served to the respective peer that expects it. Due to sender anonymity in retrieval requests cannot easily be linked to the identity, although direction where the request is coming from can be .
+deterministic but not predictable addresses. These are stored and served exactly as chunks, except that their validity is not verified by checking  their address against the swarm hash of their content but the signatures against its uniqueness. Now assume a malicious node A and its colluding peers achieve a situation when they sign on alternative allocation tables to two groups each containing a naive node B and C, respectively.
+When B and C are in their respective split, then both B and C check resource updates at the same time. An adversary A has a hard time making sure that each of the two versions is served to the respective peer that expects it.%
+%
+\footnote{Due to sender anonymity in retrieval requests cannot easily be linked to the originators identity, although direction where the request is coming from can be. The scheme can be strengthened by requiring entire neighbourhoods to sign off on the uniqueness and increase the stake., i.e. if they are caught giving out different updates under the same address, they can be challenged on the blockchain and lose their deposit. See section \ref{sec:courtroom} for how such promises can be guaranteed. 
+As the number of required addresses (neighbourhoods) for a single update increases, the probability of uniqueness multiplies, essentially to allow arbitrary level of certainty.}
+%
 This uses the power of the big network to make it impossible for adversaries to fork on the truth.
 %https://gist.github.com/zelig/895563df3357ef862f30be5c4344e63f
 
-In summary, using soft channel deposits enables the chequebook owner to allocate and reallocate funds
-as channel deposits in a fairly flexible way without blockchain transaction costs,
-yet provide $100\%$ solvency guarantees on all active conditional bonds and bounties to their peers.
-
-
-
-
-% \textbf{Suggestion: delete the rest of this subsection}
-% 
-% 
-% If the variance is expected to be higher than the loss a peer can afford,
-% risk of insolvency can be mitigated by assigning part of the balance to a beneficiary.
-% This locked up sum, called \gloss{channel deposit} allows the owner a tilted balance and
-% serves as assured collateral dedicated to a particular peer.
-% This can be implemented by keeping peer-specific balances in the chequebook contract.
-% This deposit is no longer pooled over multiple creditors
-% and locking it can guarantee successful cashing of cheques up to the deposited amount.
-% Withdrawal from the channel deposit is possible but involves a grace period during which
-% the counterparty is invited to challenge the current balance by sending in the (last) cheque
-% with the highest amount. After the grace period the owner can reduce the deposit to cover only
-% its actual debt and may withdraw the remainder.
-% In order to get the balance of account between peers, the contract needs access to the counterparty
-% chequebook contract. For ease of explanation we assume that beneficiary is the
-% chequebook contract itself. Channel deposits can then be implemented as a map with beneficiary contract
-% address as key and the integer balance in wei as value.
-% /
+In summary, using soft channel deposits enables the chequebook owner to allocate and reallocate funds from their liquid balance as channel deposits each dedicated to one particular peer. 
+This construct offers  a way for A's peers to hold out on cashing beyond the hard channel deposit. 
+This  allows us to overcome high variance in debt across epochs as long as the overall debt across channels remains below the global channel deposit in a fairly flexible way without blockchain transaction costs, 
+yet provides very strong guarantees there is a consensus among A's peer with regards to 
+the allocation. 
 
 \subsection{Zero barrier to entry}
-
-A tremendous advantage of swap accounting is  y.
 
 Swap accounting can also work in one direction only. If a party enters the system with zero ether (\gloss{newcomer}), but connects to peers with funds (\gloss{insider}), the newcomer begins to provide the service (and not use it) in order to earn a positive swap balance. Once the payment threshold is reached, the newcomer will be paid and is then able to deploy chequebook of her own.
 In short, even without any chequebook contract at all, Swap allows for zero cost onboarding of newcomers. Once the payout threshold is reached, the insiders could pay the newcomers on-chain. 
 
 If the insider has a chequebook and wishes to pay the newcomer with a cheque, this is also possible, but there is a caveat here in that cashing cheques requires a gas expenditure.%
 %
-\footnote{although this restriction may fall once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout.}
+\footnote{Although this restriction may be dropped once ethereum is upgraded to the `Metropolis' release in which the chequebook contract will be able to pay for the transfer and deduct the cost of the transfer from the payout.}
 %
 The newcomer will be able to earn cheques for services provided, but will not have the means to cash them. 
 Unless the first transaction is on-chain or the node can convince one of its peers to send the transaction for them.
