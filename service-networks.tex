@@ -1,4 +1,5 @@
 \section{Service networks}
+\label{sec:networks}
 
 In this section we describe how the tools for peer-to-peer accounting and data exchange can
 be used to drive the incentives for distributed digital services.
@@ -24,7 +25,7 @@ Service networks enable \gloss{indirect transactions} by relaying tasks and deli
 swap-channel transactions on every hop.
 This makes it possible to preserve the scalability and security
 of swap, yet extend the scope of transactions both in terms of
-frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two nodes}.
+frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two non-connected nodes}.
 Service networks with global provision guarantees further improve the scope by
 offering guaranteed market making and delivery in a direct immediately settling
 swap transaction. As a result non-participating users can just \emph{request and disappear}.
@@ -44,7 +45,7 @@ it just relays the same to D who issues a receipt (or takeover proof).
 Each of these steps is implemented as swaps of conditional notes. The moment C receives
 the receipt, it is incentivised to pass it back to B as an invoice to prompt
 settlement. The same is true for B and any number of intermediate relaying nodes
-(see figure \ref{fig:swapchannelnetwork}).
+(see figure \ref{fig:svcnets-sequence-diagram}).
 
 \input{svcnets-overlay-diagram.tex}
 \input{svcnets-sequence-diagram.tex}
@@ -58,8 +59,7 @@ In order to incentivise relaying nodes to take part in such a network,
 a transaction fee for every hop needs to be introduced.  We stipulate that the transaction fee
 for one swap is proportional to the logarighmic distance that the hop spans.
 As a consequence, the simple rational strategy to maximise profit will incentivise nodes to find the
-closest node when relaying as well as maintain a healthy connectivity that is the
-prerequisite for successful routing.
+closest node when relaying as well as maintain a healthy connectivity needed for successful routing.
 Furthermore, the entire transaction fee can be precalculated as proportional
 to the distance between sender and remote beneficiary and therefore can be offered in advance
 when issuing the conditional bond.
@@ -76,7 +76,7 @@ In addition to swap channels, connected nodes operate \gloss{provable data excha
 Assume that two nodes participate in a particular service that involve
 relaying objects (such as requests and responses).
 The content addresses (swarm hash) of consecutive objects
-sent one direction constitute a \emph{data stream}.
+sent in one direction constitute a \emph{data stream}.
 Both peers save this stream to swarm and maintain an index mapping the hashes to offsets.
 The upstream peer (sender) calculates the swarm hash of this index and periodically
 signs it against the current blockheight or timestamp as well as the data stream identitfier.
@@ -180,3 +180,12 @@ This type of service network is called \gloss{warranted automatic service provis
 Since one can thus obtain instant enforcable service guarantees 
 in one swap exchange, WASP networks allow users to \gloss{request and disappear}. Applying this scheme to swarm insured storage, given a WASP network of storage nodes, swarm users can \emph{upload and disappear}.
 
+\subsection{Atomic swap}
+
+The typical market making mechanism is the swap of request, offer, agreement.
+This pattern is described as a 
+conditional noet issued by A specifying an escrow that takes a conditional bond referring to the first as evidence. 
+If this is countersigned by the original issuer, the testimony is positive, otherwise N/A.
+This construction can be abstracted out as a generic connector witness which is equivalent to the logical AND operator. It validates two conditional notes and check their mutual commitment to binding them atomically. 
+
+Another usecase is decentralised orderbooks

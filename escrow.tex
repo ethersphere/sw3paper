@@ -1,4 +1,3 @@
-%\section{Escrow conditions on future payments}
 \section{Promissory notes}
 
 A promissory note is a redeemable promise of payment potentially maturing in the future. For example a cheque (see section \ref{subsubsec:per-user-guarantees}) is a promise of payment that can be redeemed at any time by `cashing' the cheque. 
@@ -80,6 +79,8 @@ type & type
 \\
 \multicolumn{2}{|l||}{conditional bond} &  & \tick & \tick & \tick & \tick & \opt& \opt
 \\
+\multicolumn{2}{|l||}{commitment} &   & \tick & \opt &\tick &\opt &\opt& \tick
+\\
 \multicolumn{2}{|l||}{bounty} & \tick &  \tick & & \tick & \tick & \opt& \opt
 \\
 \multicolumn{2}{|l||}{soft channel deposit} &  \tick & \tick & & & && \opt
@@ -99,25 +100,22 @@ type & type
 
 Let us assume that node A issues a conditional note (bond or bounty) to B with expiry (valid-until) time $T$. $ T$ represents the earliest time that A can consider the note unfulfilled (the service undelivered), before that we say that the note is \emph{active}. Let us further assume that B fulfills the condition while the note is active.
 
-Invoking the escrow contract directly B can of course redeem the note, however it would be nice if this could be subsumed in the Swap traffic so that no expensive on-chain operation is necessary. 
+Invoking the escrow contract directly, B can of course redeem the note, however, it would be nice if this could be subsumed in the Swap traffic so that no expensive on-chain operation is necessary. 
 To redeem the note in Swap, B notifies A of successful delivery of the service and issues  an \gloss{invoice}. This invoice contains the note id, the current cumulative swap balance and the serial number of the last cheque. The invoice thus contains the swap balance at the time of delivery as well as the note that is to be redeemed. It serves to indicate that the subsequent cheque will be the one to pay the outstanding amount for the note.
 
 As a response, A is expected to send a cheque with an updated channel balance reflecting the payment of the invoice; i.e., the amount in the conditional note is added to the cumulative total. The remarks field references the conditional note id or the invoice id. If A refuses to do this, B can still send the conditional note in a transaction to the escrow contract on-chain. When the witness validates the delivery condition, and the testimony is positive, the amount is escrowed and a grace period starts. During the grace period, A can respond by sending in the appropriate cheque to the contract as proof that the cheque was issued.
 
-Conditional notes correspond to service requests. If peer B accepts and decides to act on the conditional bond, it is prudent to require that total liability over all active bonds with B. If this total is higher than the channel deposit, there are no solvency guarantees. In these cases, B can accept bonds (as loan requests) or can expect A to top up the channel deposit. For the scenario, where usage of these services are not simultaneous but alternating, it would be ideal to have a way to reallocate channel deposits in a flexible way.
+Conditional notes correspond to service requests. If peer B accepts and decides to act on the conditional bond, it is prudent to require that total liability over all active bonds with B. If this total added to the total uncashed balance is higher than the channel deposit, there are no solvency guarantees. In these cases, B can accept bonds (as loan requests) or can expect A to top up the channel deposit. For the scenario, where usage of these services are not simultaneous but alternating, soft channel deposit allocations 
+are ideal.
 
 Let us assume A and B both maintain an ordered list of active conditional notes (bonds and bounties) issued by A.
 Each time A issues a conditional note or pays for a fulfilled one or one expires, the list is updated.
-The hashes of active notes in order of issuance is organised in a swarm tree, the
-root hash of which is signed by B and passed to A together with a so called
-\gloss{soft channel deposit claim}. This claim constitutes an acknowledgment of
-the outstanding liabilities of A towards B. Assume further that there exist a notion of \gloss{epoch},
-a fixed settlement period at the end of which B needs to sign off on the total sum of active
-outstanding conditional notes issued by A to B.
-Formally, a \gloss{soft channel deposit claim} is a note with the following fields:
 
-\begin{itemize}
-  \item A's contract address
-  \item the total sum of all active outstanding conditional notes
-  \item the epoch index
-\end{itemize}
+Consider the liabilities when conditional notes enter the swap. 
+If A wants to send a conditional note $C_i$ to B, it takes the total of the amounts on outstanding  notes $t_B$ active in the next epoch. 
+If the total uncashed balance is not greater than the total channel deposit (the sum of hard and soft channel deposits), the swap contract is guaranteed to be solvent even if all conditional notes get fulfilled and redeemable. If it is greater, there is unsecured liablity, defined as $l_B = t_B + u_B - d_B$. The peer is potentially insolvent if $\sum_{i\in P}l_i > b$, assuming all conditional notes become fulfilled all peers cash out and no extra amount is deposited on the contract. 
+
+If conditional notes are to be secured, B needs to treat conditional notes the same way as uncashed cheques.
+The total amount of active condition notes is added to the total of uncashed cheques and following the protocol for soft channel deposit allocation, A shadows this amount with the allocations.
+
+% In this section we discussed the various types of promissory notes
