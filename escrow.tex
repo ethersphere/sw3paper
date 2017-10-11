@@ -110,9 +110,9 @@ Let us assume A and B both maintain an ordered list of active conditional notes 
 Each time A issues a conditional note or pays for a fulfilled one or one expires, the list is updated.
 
 Consider the liabilities when conditional notes enter the swap. 
-If A wants to send a conditional note $C_i$ to B, it takes the total of the amounts on outstanding  notes $t_B$ active in the next epoch. 
+If A wants to send a conditional note $C_i$ to B, it takes the total of the amounts on outstanding notes $t_B$ active in the next epoch. 
 If the total uncashed balance is not greater than the total channel deposit (the sum of hard and soft channel deposits), the swap contract is guaranteed to be solvent even if all conditional notes get fulfilled and redeemable and all peers decide to cash out on their as yet uncashed cheques. If it is greater, there is unsecured liablity, defined as $l_B = t_B + u_B - d_B$. The peer is potentially insolvent if $\sum_{i\in P}l_i > b$, assuming all conditional notes become fulfilled all peers cash out and no extra amount is deposited on the contract. 
 
 If conditional notes are to be secured, B needs to treat conditional notes the same way as uncashed cheques.
-The total amount of active condition notes is added to the total of uncashed cheques and following the protocol for soft channel deposit allocation, A shadows this amount with the allocations.
+The total amount of active conditional notes is added to the total of uncashed cheques and following the protocol for soft channel deposit allocation, A shadows this amount with the allocations.
                             
