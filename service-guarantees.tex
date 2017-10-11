@@ -13,14 +13,13 @@ First we describe how to give service guarantees (swear), then discuss how they 
 Finally we link together the three contracts by showing how the swap interacts with swear and swindle.
 
 
-\subsection{Giving service guarantees}
+\subsection{Commitment and litigation}
 
 Without loss of generality, we can conceptualise a generic service as described by a game contract
 on the blockchain (see later in \ref{sec:swindle}).
 
 
-Nodes can commit to providing a service by signing against the game contract
-either in a transaction or issuing a signed note offchain.
+Nodes indicate their \gloss{commmitment} to providing a service by signing against the game contract either in a transaction or issuing a signed note offchain. 
 By committing to the game contract  providers can be challenged if they don't comply with the rules.
 
 Litigation on the other hand, allows customers to initiate an on-chain court procedure
@@ -44,7 +43,7 @@ By registering on a service contract and putting up a deposit if required, provi
 This deposit is locked up and used later as compensatory insurance transferred to the
 customer, redistributed or burnt.
 
-\subsection{Challenging a service contract}
+\subsection{Trial}
 \label{sec:swindle}
 
 If a service provider is suspected of non-compliance, they can be challenged
@@ -71,7 +70,7 @@ To implement such an abstract dispute resolution system
 the trial is described by a \emph{finite state automaton} the states of which correspond to stages of litigation. 
 The transitions are labelled with various outcomes of evaluating evidence submitted
 to the respective expert witness associated with the stage (true, false, N/A). A witness
-is a smart contract that implements the $\mathit{testimonyFor}$ function which takes
+is a smart contract that implements the \emph{testimony} function which takes
 as arguments the provider address, the plaintiff address, and the note id (the hash of the signed note)
 representing the service request.
 
@@ -128,20 +127,21 @@ the sentence in case of a guilty verdict (G).}
 \end{figure}
 \end{center}
 
-\subsection{Enforcing a guilty verdict}
+\subsection{Enforcement}
 
 When a guilty verdict is reached, the swindle contract calls back to the swear contract to enforce the sentence, the forfeiture of the game deposit. The swear contract act as executor of this decree, in a way similar to how a court order is observed by the agencies in a position to enforce sentences.  
 
 The contract that handles the deposits and registers which node plays which game is called \gloss{swear}.
-The swear contract is a registry from identities to game contracts.%
+The swear contract is a registry of commitments, a mapping from identities to game contracts.%
 %
 \footnote{One can imagine not completely open swear registries which curate a whitelist of safe or recommended games. Similarly to an appstore, these contracts could catalogue service games.}
 %
 An entry is created if provider signs off on a service game contract in an act of \gloss{commitment}. Essentially, the swear contract only needs to record how much deposit each commitment promised and let the swap channel handle the deposit.
 The swear contract can  ask the swap if the provider has insufficient funds dedicated as  swear deposits. This is simply implemented by channel deposit allocation: nodes allocate the appropriate amount as channel deposit with the swear contract as beneficiary.
-Commitments are implemented as a signed note containing an amount, the swear contract address as the escrow witness, the games contract address in the remark field, optionally a beneficiary and validity dates. Commitments are a subtype of conditional bonds which when submitted to the swap call out to the swear contract as its witness and starts a new case against the issuer. Interpreted as a service request, a commitment authorises transfer of a balance up to amount (actual amount determined by the witness) and asks the swear contract to handle all service complaints against the provider. The swear contract implements the witness interface and when its testimonyFor function is called, it prepares the case and authorises the swindle contract to lead the trial. When the guilty or not-guilty verdict is reached, the swindle contract calls back to the swear contract that sets out to execute the sentence with a call to $execute$ giving a case id as argument.
+Commitments are implemented as a signed note containing an amount, the swear contract address as the escrow witness, the games contract address in the remark field, optionally a beneficiary and validity dates. Commitments are a subtype of conditional bonds which when submitted to the swap call out to the swear contract as its witness and starts a new case against the issuer. 
+Interpreted as a service request, a commitment authorises the transfer of a balance up to the amount (actual amount determined by the witness) and asks the swear contract to handle all service complaints against the provider. The swear contract implements the witness interface and when its \emph{testimony} function is called, it prepares the case and authorises the swindle contract to lead the trial. When the guilty or not-guilty verdict is reached, the swindle contract calls back to the swear contract that sets out to execute the sentence with a call to $execute$ giving a case id as argument.
 
-The sentence starts with transferring the deposit amount to the deposit handler contract calling execute with the case id.
+The sentence starts with transferring the deposit amount to the deposit handler contract calling \emph{execute} with the case id.
 
 
 In this section we connected the dots and showed how swap swear and swindle interact, see figure \ref{fig:sw3}.

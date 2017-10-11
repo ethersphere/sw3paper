@@ -21,11 +21,10 @@ dealings and can afford setting up contracts on the blockchain to secure their i
 \footnote{Given the semipermanent connections of the TCP based kademlia of swarm, peers interact with
 $O(log(n))$ peers where $n$ is the number of nodes in the network.}
 %
-Service networks enable \gloss{indirect transactions} by relaying tasks and deliveries using
-swap-channel transactions on every hop.
+A \gloss{swap channel network} enables \gloss{indirect transactions} by relaying tasks and deliveries using swap-channel transactions on every hop.
 This makes it possible to preserve the scalability and security
 of swap, yet extend the scope of transactions both in terms of
-frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two non-connected nodes}.
+frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two non-connected nodes}. 
 Service networks with global provision guarantees further improve the scope by
 offering guaranteed market making and delivery in a direct immediately settling
 swap transaction. As a result non-participating users can just \emph{request and disappear}.
@@ -177,14 +176,12 @@ When the original issuer of the task request receives the receipt for its bounty
 they have all that is needed to start finger pointing after the deadline for the service task passed. In other words, service users have \emph{instant guarantees} that the service will be provided for the task they request, even though it is unknown at the time by which node.
 
 This type of service network is called \gloss{warranted automatic service provision (WASP)} network.
-Since one can thus obtain instant enforcable service guarantees 
-in one swap exchange, WASP networks allow users to \gloss{request and disappear}. Applying this scheme to swarm insured storage, given a WASP network of storage nodes, swarm users can \emph{upload and disappear}.
+Since one can thus obtain instant enforceable service guarantees in one swap exchange, WASP networks allow users to \gloss{request and disappear}. Applying this scheme to swarm insured storage, given a WASP network of storage nodes, swarm users can \emph{upload and disappear}.
 
 \subsection{Atomic swap}
 
 The typical market making mechanism is the swap of request, offer, agreement.
-This pattern is described as a 
-conditional noet issued by A specifying an escrow that takes a conditional bond referring to the first as evidence. 
+This pattern is described as a conditional note issued by A specifying an escrow that takes a conditional bond referring to the first as evidence. 
 If this is countersigned by the original issuer, the testimony is positive, otherwise N/A.
 This construction can be abstracted out as a generic connector witness which is equivalent to the logical AND operator. It validates two conditional notes and check their mutual commitment to binding them atomically. 
 
