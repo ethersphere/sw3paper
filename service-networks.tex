@@ -10,10 +10,12 @@ Scalability of swap channels is based on the premise that directly connected nod
 %
 \footnote{Given the semi-permanent connections of the TCP based kademlia of swarm, peers interact with $O(log(n))$ peers where $n$ is the number of nodes in the network.}
 %
-A \gloss{swap channel network} enables \gloss{indirect transactions} by relaying tasks and deliveries using swap-channel transactions on every hop. This makes it possible to preserve the scalability and security of swap, yet extend the scope of transactions both in terms of frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions between any two non-connected nodes}. 
-Service networks with global provision guarantees further improve the scope by offering guaranteed market making and delivery in a direct immediately settling swap transaction. As a result non-participating users can just \emph{request and disappear}.
+A \gloss{swap channel network} enables \gloss{indirect transactions} by relaying tasks and deliveries using swap-channel transactions on every hop. This makes it possible to preserve the scalability and security of swap, yet extend the scope of transactions both in terms of frequency and reach, i.e., enabling \emph{ad-hoc one-off interactions} between \emph{any two non-connected nodes}. 
+Service networks with global provision guarantees (introduced in section \ref{sec:wasp}) further improve the scope by offering guaranteed market making and delivery in a direct immediately settling swap transaction. As a result, service users can just \emph{request and disappear}.
 
 \subsection{Incentivisation for relaying}
+
+[This section may not be part of this article, but the one on relaying etc]
 
 Let's assume that nodes A,B,C,D are participant peers of a service network such that
 A-B, B-C and C-D are direct connections with a swap channel.
@@ -28,7 +30,7 @@ Each of these steps is implemented as swaps of conditional notes. The moment C r
 In general, we define an \emph{indirect transaction} as a chain of swaps between directly connected
 peers. The success of a such indirect transactions between two nodes is dependent on whether and
 how such a chain can be found. Our assumption is that the nodes have semi-permanent connectivity
-and form a network topology where routing between any two nodes is guaranteed, e.g., kademlia. As a result, we can assume that as long as all nodes on the chain have a healthy kademlia connectivity, the prerequisite for finding the route is satisfied.
+and form a network topology where routing between any two nodes is guaranteed, e.g., kademlia. As a result, we can assume that as long as all nodes on the chain have a healthy kademlia connectivity, the prerequisite for finding a route is satisfied.
 
 In order to incentivise relaying nodes to take part in such a network, a transaction fee for every hop needs to be introduced.  We stipulate that the transaction fee for one swap is proportional to the logarithmic distance that the hop spans. As a consequence, the simple rational strategy to maximise profit will incentivise nodes to find the closest node when relaying as well as maintain a healthy connectivity needed for successful routing. Furthermore, the entire transaction fee can be precalculated as proportional to the distance between sender and remote beneficiary and therefore can be offered in advance when issuing the conditional bond.
 
@@ -52,6 +54,7 @@ ultimately responsible for failed delivery by not relaying.
 Finger pointing essentially implements \emph{guaranteed delivery}.
 
 \subsection{Uniform resource allocation and market making}
+\label{sec:wasp}
 
 In the previous section we just assumed that A knew about D (from an independent source). In case there are other nodes as well that can in theory perform the same task, a bounty is sent to potentially multiple addresses of candidate providers and an implicit market making mechanism is obtained by certified delivery.
 
@@ -78,8 +81,8 @@ Since one can thus obtain instant enforceable service guarantees in one swap exc
 
 \subsection{Atomic swap}
 
-The typical market making mechanism is the swap of request, offer, agreement. This pattern is described as a conditional note issued by A specifying an escrow that takes a conditional bond referring to the first as evidence. 
-If this is countersigned by the original issuer, the testimony is positive, otherwise N/A.
-This construction can be abstracted out as a generic connector witness which is equivalent to the logical AND operator. It validates two conditional notes and check their mutual commitment to binding them atomically. 
+The typical market making mechanism is the swap of request, offer, agreement. This pattern is described as a conditional note issued by A specifying an escrow that requires a second conditional bond referring to the first one sent back.  
+If this is countersigned by A, the testimony is positive, otherwise N/A.
+This construction can be abstracted out as a generic connector witness analogous to the logical AND operator. It validates two conditional notes and checks their mutual commitment to binding them atomically. 
 
-Another usecase is decentralised orderbooks
+% Another usecase is decentralised orderbooks

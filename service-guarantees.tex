@@ -17,7 +17,7 @@ Nodes indicate their \gloss{commitment} to providing a service by signing agains
 
 Litigation on the other hand, allows customers to initiate an on-chain court procedure in case they suspect foul play. Such accountability is crucial for the design of scalable decentralised service economies.
 
-We will describe the trial process for dispute resolution and how it evaluates the evidence against the accused provider. The verification is the same as the one used in the process of sanctioning outpayments when the escrow condition is evaluated after service delivery. However, if a provider is proven guilty by the court on the grounds of not complying with the rules specified in the service contract, various punitive measures will be automatically enforced. In most cases, this comprises losing some deposit that provider previously locked up as collateral to back their promise.%
+We will describe the trial process for dispute resolution and how it evaluates the evidence against the accused provider. The verification is the same as the one used in the context of sanctioning outpayments when the escrow condition is evaluated after service delivery. However, if a provider is proven guilty by the court on the grounds of not complying with the rules specified in the service contract, various punitive measures will be automatically enforced. In most cases, this comprises losing some deposit that provider previously locked up as collateral to back their promise.%
 %
 \footnote{Instead of or in addition to losing their deposits, nodes would also suffer loss of reputation. If any demonstrated violation of terms is recorded on the public blockchain, users can expect clean histories as a measure of reputation.}
 %
@@ -33,10 +33,10 @@ An abstract trial is composed of stages of litigation, at each stage the court p
 The specific service contract describes the rules of the service by assigning particular expert witnesses to trial stages. These witnesses evaluate evidence submitted to them in relation to the case and give testimony if asked by the judge.
 The request--response process between the judge and the witnesses can thus be standardized even though each witness may require different data to be submitted to them as evidence.
 
-To implement such an abstract dispute resolution system the trial is described by a \emph{finite state automaton} the states of which correspond to stages of litigation. The transitions are labelled with various outcomes of evaluating evidence submitted to the respective expert witness associated with the stage (true, false, N/A). A witness is a smart contract that implements the \emph{testimony} function which takes as arguments the provider address, the plaintiff address, and the note id (the hash of the signed note) representing the service request.
+To implement such an abstract dispute resolution system, the trial is described by a \emph{finite state automaton} the states of which correspond to stages of litigation. The transitions are labelled with various outcomes of evaluating evidence submitted to the respective expert witness associated with the stage (true, false, N/A). A witness is a smart contract that implements the \emph{testimony} function which takes as arguments the provider address, the plaintiff address, and the note id (the hash of the signed note) representing the service request.
 
-The \gloss{swindle} contract orchestrates the transition through the stages calling the witness contracts, handles grace periods to control the deadline for submitting evidence (challenges or their refutations) to eventually reach a guilty/non-guilty verdict on the grounds of witness testimonies.
-In case of a guilty verdict, the deposit sworn on is forfeited and the peer's registration is terminated. 
+The \gloss{swindle} contract orchestrates the transition through the stages by calling the witness contracts, handles grace periods to control the deadline for submitting evidence (challenges or their refutations) to eventually reach a guilty/non-guilty verdict on the grounds of witness testimonies.
+In case of a guilty verdict, the deposit sworn on is forfeited and the peer's registration is terminated as executed by the swear contract.
 
 \begin{center}
 \begin{figure}
@@ -75,7 +75,7 @@ In case of a guilty verdict, the deposit sworn on is forfeited and the peer's re
             edge [red,thick]  node {T} (G);
 \end{tikzpicture}
 \end{center}
-\caption{Trial stages represented as a finite state automaton describing a service contract. Upon receiving an accusation ($A_0$ or $A_1$) in a transaction, the case contract moves to the first litigation state. The orange circles represent states where a witness contract is called, the following state depends on the outcome of the witness testimony (the return value of the $\mathit{testimonyFor}$ function call).
+\caption{Trial stages represented as a finite state automaton describing a service contract. Upon receiving an accusation ($A_0$ or $A_1$) in a transaction, the case contract moves to the first litigation state. The orange circles represent states where a witness contract is called, the following state depends on the outcome of the witness testimony (the return value of the $\mathit{testimony}$ function call).
 The other nodes call the internal $\mathit{process}$ function: to pay compensation if the challenge is refuted (N/G) or enforce the sentence in case of a guilty verdict (G).}
 \label{fig:servicecontract}
 \end{figure}
@@ -91,14 +91,20 @@ The swear contract is a registry of commitments, a mapping from identities to ga
 \footnote{One can imagine not completely open swear registries which curate a whitelist of safe or recommended games. Similarly to an appstore, these contracts could catalogue service games.}
 %
 An entry is created if a provider signs off on a service game contract in an act of \gloss{commitment}. Essentially, the swear contract only needs to record how much deposit each commitment promised and let the swap channel handle the deposit.
-The swear contract can  ask the swap if the provider has insufficient funds dedicated as swear deposits. This is simply implemented by channel deposit allocation: nodes allocate the appropriate amount as channel deposit with the swear contract as beneficiary.
+The swear contract can  ask the swap if the provider has insufficient funds dedicated as swear deposits. This is simply implemented by channel deposit allocation: nodes allocate the appropriate amount as channel deposit with the swear contract as beneficiary.%
+%
+\footnote{If the grace period for withdrawal from hard channel deposits is implemented by a call to the channel beneficiary, then we can handle in an elegant way the cases where deposits are locked as collateral for services with arbitrary validity period.}
+%
 Commitments are implemented as a signed note containing an amount, the swear contract address as the escrow witness, the games contract address in the remark field, optionally a beneficiary and validity dates. Commitments are a subtype of conditional bonds which when submitted to the swap call out to the swear contract as its witness and starts a new case against the issuer. 
 Interpreted as a service request, a commitment authorises the transfer of a balance up to the amount (actual amount determined by the witness) and asks the swear contract to handle all service complaints against the provider. The swear contract implements the witness interface and when its \emph{testimony} function is called, it prepares the case and authorises the swindle contract to lead the trial. When the guilty or not-guilty verdict is reached, the swindle contract calls back to the swear contract that sets out to execute the sentence with a call to $execute$ giving a case id as argument.
 
 The sentence starts with transferring the deposit amount to the deposit handler contract calling \emph{execute} with the case id.
 
 
-In this section we connected the dots and showed how swap swear and swindle interact, see figure \ref{fig:sw3}.
+In this section we connected the dots and showed how swap swear and swindle interact.
+The swap contract can validate promissory notes so it can itself serve as witness for the swindle contract.
+When a commitment is sent to the swap contract, it calls the swear contract as an escrow witness which in turn opens a case and sanction the swindle contract to lead a trial.
+One the verdict is reached, the sentence is executed by the swear contract which has authorisation to withdraw the deposit from the swap contract that holds it in the form of hard channel deposit. Figure \ref{fig:sw3} gives an  overview of these interactions.
 
 \begin{center}
 \begin{figure}
@@ -106,7 +112,10 @@ In this section we connected the dots and showed how swap swear and swindle inte
 \begin{tikzpicture}
 \end{tikzpicture}
 \end{center}
-\caption{Swap, Swear and Swindle contracts and their interactions}
+\caption{Swap, Swear and Swindle contracts and their interactions:
+
+
+}
 \label{fig:sw3}
 \end{figure}
 \end{center}
