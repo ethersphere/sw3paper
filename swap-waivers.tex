@@ -7,7 +7,7 @@ To allow for further savings in transaction costs, it could be desirable to be a
 Such a process is possible, but it requires certain deep changes within the chequebook contract. In particular, cashing cheques can no longer be immediate and must incur a security delay, familiar from payment channels.
 
 Let us imagine a system analogous to cheques being returned to the issuer.  
-Assume peer A issued cheques to B and the balance was brought back to zero. Later the balance tilts in A's favour but the cheques from A to B have not been cashed. In the real world, user B could simply return the last cheque back to A or provably destroy it. In our case it is not so simple; we need some other mechanism by which B commits not to cash that particular cheque. Such a commitment could take several forms; it could be implemented by B signing a message allowing A to issue a new `last cheque` which has a lower cumulative total amount than before, or perhaps B can issue some kind of `negative` cheque for A's chequebook that would have the effect as if a cheque with the same amount had been paid. In this construct.
+Assume peer A issued cheques to B and the balance was brought back to zero. Later the balance tilts in A's favour but the cheques from A to B have not been cashed. In the real world, user B could simply return the last cheque back to A or provably destroy it. In our case it is not so simple; we need some other mechanism by which B commits not to cash that particular cheque. Such a commitment could take several forms; it could be implemented by B signing a message allowing A to issue a new `last cheque` which has a lower cumulative total amount than before, or perhaps B can issue some kind of `negative` cheque for A's chequebook that would have the effect as if a cheque with the same amount had been paid. 
 
 What all the implementations have in common, is that the chequebook can no longer allow instantaneous cashing of cheques. Upon receiving a cheque cashing request, the contract must wait to allow the other party in question to submit potentially missing information about cancelled cheques or reduced totals. 
 
@@ -25,12 +25,14 @@ To accommodate (semi-)bidirectional payments using a single chequebook we make t
 
 With these rules in place it is easy to see how cheque cancellation would work. 
 
+\input{diagrams/waivers-diagram}
 
 Suppose user A has issued cheques $c_0 \ldots c_n$ with cumulative totals $t_0 \ldots t_n$ to user B. Suppose that the last cheque B cashed was $c_i$. The chequebook contract has recorded that B has received a payout of $t_i$ and that the last cheque cashed had serial number $i$.
 
 Let us further suppose that the balance starts tilting in A's favour by some amount $x$. If B had already cashed cheque $c_n$, then B would now have to issue a cheque of her own using B's chequebook as the source and naming A as the beneficiary. However, since cheques $c_{i+1} \ldots c_n$  are uncashed, B can instead send to A a cheque with A's chequebook as the source, B as the beneficiary, with serial number $n+1$ and cumulative total $t_{n+1} = t_n - x$. Due to the rules enumerated above, A will accept this as equivalent to a payment of amount $x$ by B.  In this scenario, instead of sending a cheque to A, B waive part of their earlier entitlement. This justifies swap as \emph{send waiver as payment}.
 
-This process can be repeated multiple times until the cumulative total is brought back to $t_i$. At this point all outstanding debt has effectively been cancelled and any further payments must be made in the form of a proper cheque from B's chequebook to A.
+This process can be repeated multiple times until the cumulative total is brought back to $t_i$. At this point all outstanding debt has effectively been cancelled and any further payments must be made in the form of a proper cheque from B's chequebook to A (See figure \ref{fig:waivers-diagram}).
+
 
 
 % 

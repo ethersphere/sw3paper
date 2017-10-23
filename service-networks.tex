@@ -24,8 +24,8 @@ Assume further that A intends to do some ad-hoc one-off business with D. To this
 When A sends the conditional bond to B as beneficiary, B receives the conditional bond and issues the same bond only this time with C as beneficiary. C is directly connected to D, so it just relays the same to D who issues a receipt (or takeover proof). 
 Each of these steps is implemented as swaps of conditional notes. The moment C receives the receipt, it is incentivised to pass it back to B as an invoice to prompt settlement. The same is true for B and any number of intermediate relaying nodes (see figure \ref{fig:svcnets-sequence-diagram}).
 
-\input{svcnets-overlay-diagram.tex}
-\input{svcnets-sequence-diagram.tex}
+\input{diagrams/svcnets-overlay-diagram.tex}
+\input{diagrams/svcnets-sequence-diagram.tex}
 
 In general, we define an \emph{indirect transaction} as a chain of swaps between directly connected
 peers. The success of a such indirect transactions between two nodes is dependent on whether and
