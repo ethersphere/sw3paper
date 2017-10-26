@@ -208,21 +208,13 @@ Unless the first payment is an on-chain payment or the node can convince one of 
 
 We allow nodes to sign off on a structure, and extend the swap contract with a preprocessing step, which triggers payment to the transaction sender covering the transaction's gas cost plus a service fee.
 
-  
+\input{diagrams/bootstrapping}
   
 A newcomer connects to  an insider with an existing chequebook contract. The insider consumes the newcomer's services and instead of issuing a cheque, the insider agrees to create a chequebook contract for the newcomer. When the insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once the newcomer has her own chequebook contract, she is able to consume services and issue cheques to pay for them.
  
-In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) possibly some extra service fee to incentivise insiders to provide this kind of service.
+In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) possibly some extra service fee to incentivise insiders to provide this kind of service (see figure \ref{fig:bootstrapping}
 
-\begin{center}
-\begin{figure}
-\begin{center}
-\end{center}
-\caption{Bootstrapping or how to launch as a swap capable node consuming and providing a
-service  and earn money}
-\label{fig:bootstrapping}
-\end{figure}
-\end{center}
+
 
 
 To summarise, by serving before consuming, participants can bootstrap their way into swap without the need for funds. Hence swap is justified as (\emph{setting up a wallet as payment}).

@@ -24,7 +24,7 @@
 
 %
 % Matrix
-\node [matrix, very thin,column sep=.6cm,row sep=0.2cm] (matrix) at (0,0) {
+\node [matrix, very thin,column sep=1.0cm,row sep=0.2cm] (matrix) at (0,0) {
   & \node(0,0) (\IssuerLocal) {};   &                         & \node(0,0) (\IssuerSwapContract) {};   & & \node(0,0) (\BeneficiarySwapContract) {};   & & \node(0,0) (\BeneficiaryLocal) {}; \\
   & & & & & & & \\
   & & & & & & & \\
@@ -72,15 +72,15 @@
 % Flows Labels 
 \fill
   (\Issue) 
-    node[above] {\Issue}
+    node[above, font=\footnotesize ] {\Issue}
   (\Redeem) 
-    node[above] {\Redeem}
+    node[above, font=\footnotesize] {\Redeem}
   (\Clear) 
-    node[above] {\Clear}
+    node[above, font=\footnotesize] {\Clear}
   (\NW) 
-    node[above, text width=1.1cm,align=center,fill=white] {\NW}
+    node[above, font=\footnotesize, text width=1.4cm, text height=1.5cm, align=center,fill=white] {\NW}
   (\ND) 
-    node[above, text width=1.5cm,align=center,fill=white] {\ND};
+    node[above, font=\footnotesize, text width=1.5cm,align=center,fill=white] {\ND};
 
 % Interaction points 
 \draw 
