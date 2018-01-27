@@ -54,7 +54,7 @@ To add a payout guarantee, we need to make some modifications to the contract. I
 
 If both A and B have such a chequebook contract, each having some collateral locked up for the other, then this setup is functionally equivalent to a full \gloss{payment channel}; with the exception that states can not be saved on the blockchain without an actual transfer. In existing payment channel proposals, the contract can update the \gloss{relative balance}, i.e., how much of the tied up collateral belongs to A and how much belongs to B. In the simple chequebook implementation such a re-balancing would involve a transfer from one chequebook contract to the other.%
 %
-\footnote{Advanced payment channels such as Raiden \cite{citation-needed:Raiden} have the ability to string together individual channels and compose them into a network. This extension is discussed in detail in section \ref{sec:networks}.}
+\footnote{Advanced payment channels such as Raiden have the ability to string together individual channels and compose them into a network. This extension is discussed in detail in section \ref{sec:networks}.}
 %
 The chequebook implementation has the advantage that it can start out simple with features being added gradually as they are needed.
 
@@ -191,7 +191,7 @@ This uses the power of the big network to make it impossible for adversaries to 
 %https://gist.github.com/zelig/895563df3357ef862f30be5c4344e63f
 
 In summary, using soft channel deposits enables the chequebook owner to allocate and reallocate funds from their liquid deposit as channel deposits each dedicated to one particular peer. 
-This construct offers a way for A's peers to hold out on cashing beyond the hard channel deposit. As long as the overall debt across channels remains below the global channel deposit this  allows us to overcome high variance in debt across epochs and peers in a fairly flexible way without blockchain transaction costs, yet provides very strong guarantees there is a consensus among A's peer with regards to the allocation. 
+This construct offers a way for A's peers to hold out on cashing beyond the hard channel deposit. As long as the overall debt across channels remains below the global channel deposit this  allows us to overcome high variance in debt across epochs and peers in a fairly flexible way without blockchain transaction costs, yet provides very strong guarantees as long as there is a consensus among A's peers with regards to the allocation. 
 
 \subsection{Zero cost entry}
 
@@ -212,7 +212,7 @@ We allow nodes to sign off on a structure, and extend the swap contract with a p
   
 A newcomer connects to  an insider with an existing chequebook contract. The insider consumes the newcomer's services and instead of issuing a cheque, the insider agrees to create a chequebook contract for the newcomer. When the insider's service debt reaches the amount needed for contract creation, the insider sends a transaction to create the contract with newcomer as the owner. Once the newcomer has her own chequebook contract, she is able to consume services and issue cheques to pay for them.
  
-In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) possibly some extra service fee to incentivise insiders to provide this kind of service (see figure \ref{fig:bootstrapping}
+In order to be useful however, the deployed chequebook must also have some positive balance as collateral. Since the newcomer has no ether, it must be the insiders who deposit this starting balance. If peers agreed that they want to save on transaction costs, it is reasonable to create the contract with the required initial balance in one go. This would imply waiting out with contract creation until the insider's debt reaches the \emph{cost of bootstrapping} which is the sum of (1) the cost of contract creation, (2) the required starting balance, and (3) possibly some extra service fee to incentivise insiders to provide this kind of service (see figure \ref{fig:bootstrapping}).
 
 
 
